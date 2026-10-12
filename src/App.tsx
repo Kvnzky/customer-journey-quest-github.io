@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { ScreenState, GameSession, SanitizedQuestion, GameSettings, SyncStatus } from './types';
 import { dbManager } from './utils/db';
 import { soundManager } from './utils/audio';
@@ -27,7 +27,6 @@ export function App() {
   // Sync state & App info modal
   const [syncStatus, setSyncStatus] = useState<SyncStatus>(syncClient.getStatus());
   const [isInfoModalOpen, setIsInfoModalOpen] = useState(false);
-  const deviceId = dbManager.getDeviceId();
 
   // Initialize app & start background auto-sync
   useEffect(() => {
@@ -193,7 +192,6 @@ export function App() {
         onNavigate={(screen) => setCurrentScreen(screen)}
         playerName={playerName}
         onHomeClick={handleHomeClick}
-        syncStatus={syncStatus}
         onOpenInfoModal={() => setIsInfoModalOpen(true)}
       />
 

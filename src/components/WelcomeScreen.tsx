@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Play, Trophy, User, Sparkles, AlertCircle, Award, Wifi, WifiOff } from 'lucide-react';
+import { Trophy, User, Sparkles, AlertCircle, Award } from 'lucide-react';
 import { soundManager } from '../utils/audio';
 import { dbManager } from '../utils/db';
 import { SyncStatus } from '../types';

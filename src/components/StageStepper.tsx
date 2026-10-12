@@ -1,5 +1,5 @@
 import React from 'react';
-import { CheckCircle2, ChevronRight } from 'lucide-react';
+import { CheckCircle2 } from 'lucide-react';
 
 interface StageStepperProps {
   categories: string[];

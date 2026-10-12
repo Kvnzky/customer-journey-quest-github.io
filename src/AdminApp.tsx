@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { AdminLoginScreen } from './components/AdminLoginScreen';
 import { AdminPanel } from './components/admin/AdminPanel';
 
@@ -33,7 +33,7 @@ export function AdminApp() {
               if (window.desktopAPI) {
                 window.close();
               } else {
-                window.location.href = './';
+                window.location.href = window.location.protocol === 'file:' ? './index.html' : '/';
               }
             }}
           />

@@ -1,21 +1,12 @@
-import * as XLSX from 'xlsx';
-import mammoth from 'mammoth';
-import * as pdfjsLib from 'pdfjs-dist';
-import pdfWorker from 'pdfjs-dist/build/pdf.worker.mjs?url';
 import { Question } from '../types';
 import { parseQuestionsCsv, CsvImportValidationResult } from './csv';
-
-// Configure offline worker for PDF.js using Vite's ?url bundle asset resolver
-try {
-  pdfjsLib.GlobalWorkerOptions.workerSrc = pdfWorker;
-} catch (e) {
-  console.warn('PDF Worker assignment notice:', e);
-}
 
 /**
  * Extracts plain text from a Word (.docx / .doc) ArrayBuffer
  */
 export async function extractTextFromWord(arrayBuffer: ArrayBuffer): Promise<string> {
+  const mammothModule = await import('mammoth');
+  const mammoth = mammothModule.default || mammothModule;
   const result = await mammoth.extractRawText({ arrayBuffer });
   return result.value || '';
 }
@@ -24,6 +15,16 @@ export async function extractTextFromWord(arrayBuffer: ArrayBuffer): Promise<str
  * Extracts text from all pages of a PDF ArrayBuffer using pdfjs-dist
  */
 export async function extractTextFromPdf(arrayBuffer: ArrayBuffer): Promise<string> {
+  const [pdfjsLib, pdfWorkerMod] = await Promise.all([
+    import('pdfjs-dist'),
+    import('pdfjs-dist/build/pdf.worker.mjs?url')
+  ]);
+  try {
+    pdfjsLib.GlobalWorkerOptions.workerSrc = pdfWorkerMod.default;
+  } catch (e) {
+    console.warn('PDF Worker assignment notice:', e);
+  }
+
   const loadingTask = pdfjsLib.getDocument({ data: new Uint8Array(arrayBuffer) });
   const pdfDoc = await loadingTask.promise;
   let fullText = '';
@@ -41,7 +42,8 @@ export async function extractTextFromPdf(arrayBuffer: ArrayBuffer): Promise<stri
 /**
  * Converts Excel (.xlsx / .xls) ArrayBuffer to CSV format
  */
-export function convertExcelToCsv(arrayBuffer: ArrayBuffer): string {
+export async function convertExcelToCsv(arrayBuffer: ArrayBuffer): Promise<string> {
+  const XLSX = await import('xlsx');
   const data = new Uint8Array(arrayBuffer);
   const workbook = XLSX.read(data, { type: 'array' });
   const firstSheetName = workbook.SheetNames[0];
@@ -316,7 +318,7 @@ export async function parseUniversalQuestionFile(file: File): Promise<CsvImportV
   // 1. Excel files
   if (fileName.endsWith('.xlsx') || fileName.endsWith('.xls')) {
     const buffer = await file.arrayBuffer();
-    const csvText = convertExcelToCsv(buffer);
+    const csvText = await convertExcelToCsv(buffer);
     const csvResult = parseQuestionsCsv(csvText);
     if (csvResult.validQuestions.length > 0) {
       return csvResult;

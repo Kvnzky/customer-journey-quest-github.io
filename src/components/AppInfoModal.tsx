@@ -40,7 +40,7 @@ export const AppInfoModal: React.FC<AppInfoModalProps> = ({ onClose }) => {
               Your Mission
             </h4>
             <p className="text-[#8da2b5] leading-relaxed text-[11px]">
-              Guide a enterprise customer from their very first inquiry to a lasting partnership. Make decisions across each key department to build maximum trust and business value.
+              Guide an enterprise customer from their very first inquiry to a lasting partnership. Make decisions across each key department to build maximum trust and business value.
             </p>
           </div>
 
@@ -50,7 +50,7 @@ export const AppInfoModal: React.FC<AppInfoModalProps> = ({ onClose }) => {
               <Layers className="w-3.5 h-3.5 text-cyan-400" />
               The 5 Journey Stages
             </h4>
-            <div className="grid grid-cols-5 gap-1.5 text-center font-mono text-[11px]">
+            <div className="grid grid-cols-2 sm:grid-cols-5 gap-1.5 text-center font-mono text-[11px]">
               <div className="p-2 rounded-lg bg-[#0e243a] border border-[#1d476f] text-teal-200">
                 <div className="font-bold">1</div>
                 <div className="text-[10px] mt-0.5">Marketing</div>

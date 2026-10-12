@@ -1,14 +1,13 @@
 import React, { useState } from 'react';
 import { Volume2, VolumeX, Trophy, Home, Info } from 'lucide-react';
 import { soundManager } from '../utils/audio';
-import { ScreenState, SyncStatus } from '../types';
+import { ScreenState } from '../types';
 
 interface HeaderProps {
   currentScreen: ScreenState;
   onNavigate: (screen: ScreenState) => void;
   playerName?: string;
   onHomeClick?: () => void;
-  syncStatus: SyncStatus;
   onOpenInfoModal: () => void;
 }
 
@@ -17,7 +16,6 @@ export const Header: React.FC<HeaderProps> = ({
   onNavigate,
   playerName,
   onHomeClick,
-  syncStatus,
   onOpenInfoModal
 }) => {
   const [muted, setMuted] = useState(soundManager.getMuted());

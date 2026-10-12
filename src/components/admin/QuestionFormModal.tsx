@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, Plus, AlertCircle, CheckCircle2, AlertTriangle, Eye } from 'lucide-react';
+import { X, Plus, AlertCircle, AlertTriangle, Eye } from 'lucide-react';
 import { Question } from '../../types';
 import { soundManager } from '../../utils/audio';
 
@@ -256,7 +256,7 @@ export const QuestionFormModal: React.FC<QuestionFormModalProps> = ({
 
             <div className="space-y-2.5">
               {/* Option A */}
-              <div className="flex items-center gap-2">
+              <div className="flex flex-wrap sm:flex-nowrap items-center gap-2">
                 <input
                   type="radio"
                   name="correctAnswerRadio"
@@ -274,7 +274,7 @@ export const QuestionFormModal: React.FC<QuestionFormModalProps> = ({
                   value={optA}
                   onChange={(e) => setOptA(e.target.value)}
                   placeholder="Option A (Required)"
-                  className="flex-1 px-3 py-2 rounded-lg bg-[#081525] border border-[#1b3e64] text-white text-sm focus:outline-none focus:border-[#38efbf]"
+                  className="flex-1 min-w-[160px] px-3 py-2 rounded-lg bg-[#081525] border border-[#1b3e64] text-white text-sm focus:outline-none focus:border-[#38efbf]"
                 />
                 <div className="flex items-center gap-1 bg-[#061322] px-2 py-1.5 rounded-lg border border-[#1b3e64]">
                   <span className="text-[10px] font-mono text-[#38efbf] font-bold">Score:</span>
@@ -294,7 +294,7 @@ export const QuestionFormModal: React.FC<QuestionFormModalProps> = ({
               </div>
 
               {/* Option B */}
-              <div className="flex items-center gap-2">
+              <div className="flex flex-wrap sm:flex-nowrap items-center gap-2">
                 <input
                   type="radio"
                   name="correctAnswerRadio"
@@ -312,7 +312,7 @@ export const QuestionFormModal: React.FC<QuestionFormModalProps> = ({
                   value={optB}
                   onChange={(e) => setOptB(e.target.value)}
                   placeholder="Option B (Required)"
-                  className="flex-1 px-3 py-2 rounded-lg bg-[#081525] border border-[#1b3e64] text-white text-sm focus:outline-none focus:border-[#38efbf]"
+                  className="flex-1 min-w-[160px] px-3 py-2 rounded-lg bg-[#081525] border border-[#1b3e64] text-white text-sm focus:outline-none focus:border-[#38efbf]"
                 />
                 <div className="flex items-center gap-1 bg-[#061322] px-2 py-1.5 rounded-lg border border-[#1b3e64]">
                   <span className="text-[10px] font-mono text-[#38efbf] font-bold">Score:</span>
@@ -332,7 +332,7 @@ export const QuestionFormModal: React.FC<QuestionFormModalProps> = ({
               </div>
 
               {/* Option C */}
-              <div className="flex items-center gap-2">
+              <div className="flex flex-wrap sm:flex-nowrap items-center gap-2">
                 <input
                   type="radio"
                   name="correctAnswerRadio"
@@ -350,7 +350,7 @@ export const QuestionFormModal: React.FC<QuestionFormModalProps> = ({
                   value={optC}
                   onChange={(e) => setOptC(e.target.value)}
                   placeholder="Option C (Optional)"
-                  className="flex-1 px-3 py-2 rounded-lg bg-[#081525] border border-[#1b3e64] text-white text-sm focus:outline-none focus:border-[#38efbf]"
+                  className="flex-1 min-w-[160px] px-3 py-2 rounded-lg bg-[#081525] border border-[#1b3e64] text-white text-sm focus:outline-none focus:border-[#38efbf]"
                 />
                 <div className="flex items-center gap-1 bg-[#061322] px-2 py-1.5 rounded-lg border border-[#1b3e64]">
                   <span className="text-[10px] font-mono text-[#38efbf] font-bold">Score:</span>
@@ -370,7 +370,7 @@ export const QuestionFormModal: React.FC<QuestionFormModalProps> = ({
               </div>
 
               {/* Option D */}
-              <div className="flex items-center gap-2">
+              <div className="flex flex-wrap sm:flex-nowrap items-center gap-2">
                 <input
                   type="radio"
                   name="correctAnswerRadio"
@@ -388,7 +388,7 @@ export const QuestionFormModal: React.FC<QuestionFormModalProps> = ({
                   value={optD}
                   onChange={(e) => setOptD(e.target.value)}
                   placeholder="Option D (Optional)"
-                  className="flex-1 px-3 py-2 rounded-lg bg-[#081525] border border-[#1b3e64] text-white text-sm focus:outline-none focus:border-[#38efbf]"
+                  className="flex-1 min-w-[160px] px-3 py-2 rounded-lg bg-[#081525] border border-[#1b3e64] text-white text-sm focus:outline-none focus:border-[#38efbf]"
                 />
                 <div className="flex items-center gap-1 bg-[#061322] px-2 py-1.5 rounded-lg border border-[#1b3e64]">
                   <span className="text-[10px] font-mono text-[#38efbf] font-bold">Score:</span>

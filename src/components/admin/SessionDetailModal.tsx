@@ -1,5 +1,5 @@
 import React from 'react';
-import { X, CheckCircle2, XCircle, Clock, Award, User, AlertTriangle } from 'lucide-react';
+import { X } from 'lucide-react';
 import { GameSession } from '../../types';
 
 interface SessionDetailModalProps {

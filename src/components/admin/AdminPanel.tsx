@@ -15,13 +15,11 @@ import {
   Copy, 
   Eye, 
   CheckCircle2, 
-  XCircle, 
   Download, 
   Upload, 
   AlertTriangle, 
   ChevronLeft, 
   ChevronRight,
-  Flame,
   Clock,
   Sparkles,
   RefreshCw,
@@ -36,12 +34,9 @@ import { soundManager } from '../../utils/audio';
 import { syncClient } from '../../utils/syncClient';
 import { 
   exportQuestionsToCsv, 
-  parseQuestionsCsv, 
-  exportLeaderboardToCsv, 
   exportSessionsToCsv, 
   downloadFile 
 } from '../../utils/csv';
-import { parseUniversalQuestionFile } from '../../utils/documentParser';
 import { QuestionFormModal } from './QuestionFormModal';
 import { QuestionPreviewModal } from './QuestionPreviewModal';
 import { SessionDetailModal } from './SessionDetailModal';
@@ -59,7 +54,6 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onLogout }) => {
   const [questions, setQuestions] = useState<Question[]>([]);
   const [settings, setSettings] = useState<GameSettings | null>(null);
   const [sessions, setSessions] = useState<GameSession[]>([]);
-  const [loading, setLoading] = useState(true);
 
   // Modals
   const [editingQuestion, setEditingQuestion] = useState<Question | null>(null);
@@ -85,7 +79,6 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onLogout }) => {
   const [pinMessage, setPinMessage] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
 
   // Universal Document Import State (Excel, Word, PDF, CSV)
-  const [csvFileContent, setCsvFileContent] = useState<string | null>(null);
   const [importedFileName, setImportedFileName] = useState<string | null>(null);
   const [isParsingFile, setIsParsingFile] = useState<boolean>(false);
   const [csvPreviewQuestions, setCsvPreviewQuestions] = useState<Question[]>([]);
@@ -163,7 +156,6 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onLogout }) => {
   };
 
   const loadAllData = async () => {
-    setLoading(true);
     try {
       const [qs, sets, sess] = await Promise.all([
         dbManager.getQuestions(),
@@ -176,8 +168,6 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onLogout }) => {
     } catch (err) {
       console.error('Error loading admin data:', err);
       showToast('Error loading database records.');
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -324,6 +314,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onLogout }) => {
     soundManager.playClick();
 
     try {
+      const { parseUniversalQuestionFile } = await import('../../utils/documentParser');
       const parsed = await parseUniversalQuestionFile(file);
       setCsvPreviewQuestions(parsed.validQuestions);
       setCsvErrors(parsed.errors);
@@ -335,12 +326,14 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onLogout }) => {
       } else {
         showToast(`No valid questions recognized in ${file.name}. Review warnings below.`);
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('File parsing error:', err);
-      setImportStatus(`Error parsing ${file.name}: ${err.message || 'Format not recognized'}`);
-      showToast(`Error parsing file: ${err.message || 'Failed to read'}`);
+      const errMsg = err instanceof Error ? err.message : 'Format not recognized';
+      setImportStatus(`Error parsing ${file.name}: ${errMsg}`);
+      showToast(`Error parsing file: ${errMsg}`);
     } finally {
       setIsParsingFile(false);
+      e.target.value = '';
     }
   };
 
@@ -355,12 +348,11 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onLogout }) => {
     if (!confirmed) return;
 
     try {
-      await dbManager.clearAllSessions();
       await syncClient.resetServerRecords();
       setSessions([]);
       soundManager.playCorrect();
       showToast('All rankings and leaderboard records have been reset.');
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Reset error:', err);
       showToast('Error resetting leaderboard records.');
     }
@@ -377,10 +369,8 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onLogout }) => {
         if (!window.confirm('WARNING: "Replace All" mode will overwrite existing questions in the database. Continue?')) {
           return;
         }
-        // Save new set
-        await dbManager.bulkSaveQuestions(csvPreviewQuestions);
+        await dbManager.replaceAllQuestions(csvPreviewQuestions);
       } else {
-        // Append mode
         await dbManager.bulkSaveQuestions(csvPreviewQuestions);
       }
 
@@ -391,7 +381,6 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onLogout }) => {
       setImportStatus(`Successfully imported ${csvPreviewQuestions.length} questions into the library!`);
       showToast(`Imported ${csvPreviewQuestions.length} questions.`);
       setCsvPreviewQuestions([]);
-      setCsvFileContent(null);
     } catch (err) {
       setImportStatus('Error importing questions into IndexedDB.');
     }
@@ -443,9 +432,13 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onLogout }) => {
     if (window.confirm(confirmMsg)) {
       try {
         await dbManager.restoreBackup(restoreJson, mode);
+        syncClient.broadcastQuestions();
+        if (restoreJson.settings) {
+          await syncClient.updateSettings(restoreJson.settings);
+        }
         await loadAllData();
         soundManager.playCorrect();
-        showToast(`Restore completed (${mode} mode).`);
+        showToast(`Restore completed (${mode} mode) and synchronized.`);
         setRestoreJson(null);
         setRestoreMessage(null);
       } catch (err) {
@@ -467,7 +460,12 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onLogout }) => {
   const filteredQuestions = questions.filter(q => {
     const matchesSearch = !qSearch || q.text.toLowerCase().includes(qSearch.toLowerCase()) || q.id.toLowerCase().includes(qSearch.toLowerCase());
     const matchesCat = qCategoryFilter === 'all' || q.category.toLowerCase() === qCategoryFilter.toLowerCase();
-    const matchesStatus = qStatusFilter === 'all' || q.status === qStatusFilter;
+    const rawStatus = (q as unknown as { status: string }).status;
+    const matchesStatus =
+      qStatusFilter === 'all' ||
+      q.status === qStatusFilter ||
+      (qStatusFilter === 'published' && rawStatus === 'active') ||
+      (qStatusFilter === 'disabled' && rawStatus === 'inactive');
     return matchesSearch && matchesCat && matchesStatus;
   }).sort((a, b) => {
     const rankA = getJourneyStageRank(a.category, allCategories);
@@ -479,12 +477,14 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onLogout }) => {
   const totalQPages = Math.ceil(filteredQuestions.length / itemsPerPage) || 1;
   const paginatedQuestions = filteredQuestions.slice((qPage - 1) * itemsPerPage, qPage * itemsPerPage);
 
-  // Session Filter
+  // Session Filter (Sorted newest-first)
   const filteredSessions = sessions.filter(s => {
     const matchesSearch = !sSearch || s.playerName.toLowerCase().includes(sSearch.toLowerCase()) || s.id.toLowerCase().includes(sSearch.toLowerCase());
     const matchesStatus = sStatusFilter === 'all' || s.status === sStatusFilter || (sStatusFilter === 'timeout' && s.gameOverReason === 'TIME_EXPIRED');
     return matchesSearch && matchesStatus;
-  });
+  }).sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+
+  const gameHref = typeof window !== 'undefined' && window.location.protocol === 'file:' ? './index.html' : '/';
 
   return (
     <div className="w-full max-w-6xl mx-auto px-4 py-6 animate-fade-in">
@@ -534,7 +534,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onLogout }) => {
           </button>
 
           <a
-            href="./"
+            href={gameHref}
             className="py-2 px-3.5 rounded-xl bg-[#0e243a] hover:bg-[#16385b] border border-cyan-500/30 text-cyan-300 hover:text-white text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer"
             title="Open the player Game interface"
           >
@@ -720,7 +720,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onLogout }) => {
           <div className="bg-[#0b1c2d] border border-[#1b3658] rounded-2xl p-6">
             <h3 className="text-lg font-bold text-white mb-2">Welcome to Customer Journey Quest Administration</h3>
             <p className="text-xs sm:text-sm text-[#8da2b5] leading-relaxed mb-4">
-              This panel enables full administration of question libraries, 30-second question timer thresholds, scoring multipliers, historical player sessions, CSV exports, and full JSON database backups directly on your local system without any third-party cloud dependencies.
+              This panel enables full administration of question libraries, question countdown timer thresholds, tiered choice scoring, historical player sessions, CSV/Excel/Word/PDF imports, and full JSON database backups with real-time synchronization across connected game clients.
             </p>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2">
@@ -733,7 +733,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onLogout }) => {
                   <span>Manage Question Library</span>
                 </div>
                 <p className="text-xs text-slate-400">
-                  {questions.length} total questions ({publishedQuestionsCount} published). Add, edit, duplicate, or preview questions.
+                  {questions.length} total questions ({publishedQuestionsCount} published, {draftQuestionsCount} drafts, {disabledQuestionsCount} disabled).
                 </p>
               </div>
 
@@ -751,15 +751,15 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onLogout }) => {
               </div>
 
               <div
-                onClick={() => setActiveTab('backup_restore')}
+                onClick={() => setActiveTab('records')}
                 className="bg-[#0e243a] border border-[#193b61] rounded-xl p-4 hover:border-[#38efbf] transition-all cursor-pointer"
               >
                 <div className="flex items-center gap-2 text-amber-400 font-bold text-sm mb-1">
-                  <Database className="w-4 h-4" />
-                  <span>Data Backups</span>
+                  <Users className="w-4 h-4" />
+                  <span>Player & Score Records</span>
                 </div>
                 <p className="text-xs text-slate-400">
-                  Export complete JSON snapshot or restore database records safely.
+                  {sessions.length} recorded sessions across {uniquePlayersCount} players (Top score: {highestScoreRecorded} pts).
                 </p>
               </div>
             </div>
@@ -834,8 +834,9 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onLogout }) => {
               className="px-3 py-2 rounded-lg bg-[#081525] border border-[#193a5e] text-xs sm:text-sm text-white focus:outline-none focus:border-[#38efbf]"
             >
               <option value="all">All Statuses</option>
-              <option value="active">Active Only</option>
-              <option value="inactive">Inactive Only</option>
+              <option value="published">Published Only</option>
+              <option value="draft">Drafts Only</option>
+              <option value="disabled">Disabled Only</option>
             </select>
           </div>
 
@@ -897,14 +898,14 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onLogout }) => {
                           <button
                             onClick={() => setPreviewingQuestion(q)}
                             title="Preview Question"
-                            className="p-1.5 rounded-lg bg-[#081525] hover:bg-[#132d4b] text-cyan-400 transition-colors"
+                            className="p-1.5 rounded-lg bg-[#081525] hover:bg-[#132d4b] text-cyan-400 transition-colors cursor-pointer"
                           >
                             <Eye className="w-3.5 h-3.5" />
                           </button>
                           <button
                             onClick={() => handleDuplicateQuestion(q)}
                             title="Duplicate Question"
-                            className="p-1.5 rounded-lg bg-[#081525] hover:bg-[#132d4b] text-teal-400 transition-colors"
+                            className="p-1.5 rounded-lg bg-[#081525] hover:bg-[#132d4b] text-teal-400 transition-colors cursor-pointer"
                           >
                             <Copy className="w-3.5 h-3.5" />
                           </button>
@@ -914,14 +915,14 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onLogout }) => {
                               setIsQuestionFormOpen(true);
                             }}
                             title="Edit Question"
-                            className="p-1.5 rounded-lg bg-[#081525] hover:bg-[#132d4b] text-amber-400 transition-colors"
+                            className="p-1.5 rounded-lg bg-[#081525] hover:bg-[#132d4b] text-amber-400 transition-colors cursor-pointer"
                           >
                             <Edit3 className="w-3.5 h-3.5" />
                           </button>
                           <button
                             onClick={() => handleDeleteQuestion(q)}
                             title="Delete Question"
-                            className="p-1.5 rounded-lg bg-[#081525] hover:bg-rose-950/80 text-rose-400 transition-colors"
+                            className="p-1.5 rounded-lg bg-[#081525] hover:bg-rose-950/80 text-rose-400 transition-colors cursor-pointer"
                           >
                             <Trash2 className="w-3.5 h-3.5" />
                           </button>
@@ -944,14 +945,14 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onLogout }) => {
                 <button
                   disabled={qPage <= 1}
                   onClick={() => setQPage(prev => Math.max(1, prev - 1))}
-                  className="p-1.5 rounded-lg bg-[#081525] border border-[#193a5e] text-slate-300 disabled:opacity-40"
+                  className="p-1.5 rounded-lg bg-[#081525] border border-[#193a5e] text-slate-300 disabled:opacity-40 cursor-pointer"
                 >
                   <ChevronLeft className="w-4 h-4" />
                 </button>
                 <button
                   disabled={qPage >= totalQPages}
                   onClick={() => setQPage(prev => Math.min(totalQPages, prev + 1))}
-                  className="p-1.5 rounded-lg bg-[#081525] border border-[#193a5e] text-slate-300 disabled:opacity-40"
+                  className="p-1.5 rounded-lg bg-[#081525] border border-[#193a5e] text-slate-300 disabled:opacity-40 cursor-pointer"
                 >
                   <ChevronRight className="w-4 h-4" />
                 </button>
@@ -983,7 +984,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onLogout }) => {
                 <span className="text-xs text-[#38efbf] font-mono">Default: 30s</span>
               </label>
               <p className="text-xs text-[#8da2b5] mb-2.5">
-                Mandatory countdown timer. If zero is reached, the entire game ends immediately.
+                Per-question countdown timer. When 0s is reached, the current question automatically locks in and advances.
               </p>
               <input
                 type="number"
@@ -1018,7 +1019,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onLogout }) => {
               <div className="bg-[#081525] p-4 rounded-xl border border-[#183658] flex items-center justify-between">
                 <div>
                   <div className="text-sm font-semibold text-white">Shuffle Question Order</div>
-                  <div className="text-xs text-[#7ea0b7]">Randomize sequence for each game</div>
+                  <div className="text-xs text-[#7ea0b7]">Randomize questions selected per stage</div>
                 </div>
                 <input
                   type="checkbox"
@@ -1217,14 +1218,14 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onLogout }) => {
                           <button
                             onClick={() => setInspectingSession(s)}
                             title="Inspect Snapshots"
-                            className="p-1.5 rounded-lg bg-[#081525] hover:bg-[#132d4b] text-cyan-400"
+                            className="p-1.5 rounded-lg bg-[#081525] hover:bg-[#132d4b] text-cyan-400 cursor-pointer"
                           >
                             <Eye className="w-3.5 h-3.5" />
                           </button>
                           <button
                             onClick={() => handleDeleteSession(s)}
                             title="Delete Session"
-                            className="p-1.5 rounded-lg bg-[#081525] hover:bg-rose-950/80 text-rose-400"
+                            className="p-1.5 rounded-lg bg-[#081525] hover:bg-rose-950/80 text-rose-400 cursor-pointer"
                           >
                             <Trash2 className="w-3.5 h-3.5" />
                           </button>
@@ -1276,7 +1277,9 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onLogout }) => {
               <div className="bg-[#081525] p-4 rounded-xl border border-[#193a5e]">
                 <div className="text-[10px] text-[#7ea0b7] uppercase font-mono">Last Sync Check</div>
                 <div className="text-xl font-bold text-slate-200 font-mono mt-1 truncate">{syncStatus.lastSyncTime || 'Active'}</div>
-                <div className="text-[11px] text-emerald-400 mt-0.5 font-mono">Status: Connected</div>
+                <div className={`text-[11px] mt-0.5 font-mono ${syncStatus.isOnline ? 'text-emerald-400' : 'text-amber-400'}`}>
+                  {syncStatus.isOnline ? 'Status: Connected' : 'Status: Local Cache'}
+                </div>
               </div>
 
               <div className="bg-[#081525] p-4 rounded-xl border border-[#193a5e]">

@@ -121,7 +121,17 @@ export default function handler(req, res) {
         if (!isNaN(ts) && ts < store.lastResetAt) return;
       }
       if (!existingIds.has(sess.id)) {
-        store.sessions.push(sess);
+        const cleanPlayerName = String(sess.playerName || 'Anonymous').trim().slice(0, 60);
+        const sanitizedSession = {
+          ...sess,
+          playerName: cleanPlayerName,
+          normalizedPlayerName: cleanPlayerName.toLowerCase(),
+          score: Math.max(0, Math.min(10000, Number(sess.score) || 0)),
+          correctCount: Math.max(0, Number(sess.correctCount) || 0),
+          totalQuestions: Math.max(0, Number(sess.totalQuestions) || 0),
+          durationSeconds: Math.max(0, Number(sess.durationSeconds) || 0)
+        };
+        store.sessions.push(sanitizedSession);
         existingIds.add(sess.id);
         addedCount++;
       }

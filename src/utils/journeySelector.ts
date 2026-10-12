@@ -164,7 +164,7 @@ export function selectJourneyQuestions(
     const pool = [...(stageGroups.get(stage) || [])];
     let pickedForStage: Question[] = [];
 
-    if (settings.randomSelection) {
+    if (settings.randomSelection || settings.shuffleQuestions) {
       // Randomly pick countNeeded from this stage's pool without replacement
       for (let i = 0; i < countNeeded && pool.length > 0; i++) {
         const randIdx = Math.floor(Math.random() * pool.length);
@@ -175,7 +175,7 @@ export function selectJourneyQuestions(
       pickedForStage = pool.slice(0, countNeeded);
     }
 
-    if (settings.shuffleQuestions) {
+    if (settings.shuffleQuestions && pickedForStage.length > 1) {
       // Shuffle questions WITHIN this stage only (never breaks stage order!)
       for (let i = pickedForStage.length - 1; i > 0; i--) {
         const j = Math.floor(Math.random() * (i + 1));

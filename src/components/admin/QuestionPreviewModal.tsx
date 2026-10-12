@@ -1,5 +1,5 @@
 import React from 'react';
-import { X, Clock, Award, Sparkles, CheckCircle2 } from 'lucide-react';
+import { X, Clock, Award, CheckCircle2 } from 'lucide-react';
 import { Question } from '../../types';
 
 interface QuestionPreviewModalProps {

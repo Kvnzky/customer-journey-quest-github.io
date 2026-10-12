@@ -16,6 +16,7 @@ import confetti from 'canvas-confetti';
 import { GameSession } from '../types';
 import { dbManager } from '../utils/db';
 import { soundManager } from '../utils/audio';
+import { syncClient } from '../utils/syncClient';
 
 interface ResultsScreenProps {
   session: GameSession;
@@ -38,9 +39,15 @@ export const ResultsScreen: React.FC<ResultsScreenProps> = ({
   const [showReview, setShowReview] = useState<boolean>(true);
 
   useEffect(() => {
+    let confettiFired = false;
+
     const fetchRankingInfo = async () => {
       try {
-        const isPB = await dbManager.checkIsPersonalBest(session.normalizedPlayerName, session.score);
+        const isPB = await dbManager.checkIsPersonalBest(
+          session.normalizedPlayerName,
+          session.score,
+          session.id
+        );
         setIsPersonalBest(isPB);
 
         const allRanked = await dbManager.getLeaderboard('overall');
@@ -50,7 +57,8 @@ export const ResultsScreen: React.FC<ResultsScreenProps> = ({
           setIsSharedRank(!!match.isSharedRank);
         }
 
-        if (session.status === 'completed' || isPB) {
+        if (!confettiFired && (session.status === 'completed' || isPB)) {
+          confettiFired = true;
           confetti({
             particleCount: 80,
             spread: 70,
@@ -63,6 +71,10 @@ export const ResultsScreen: React.FC<ResultsScreenProps> = ({
     };
 
     fetchRankingInfo();
+    const unsub = syncClient.subscribe(() => {
+      fetchRankingInfo();
+    });
+    return () => unsub();
   }, [session]);
 
   const formatDuration = (seconds: number) => {

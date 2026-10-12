@@ -224,6 +224,18 @@ class DatabaseManager {
     });
   }
 
+  public async replaceAllQuestions(questions: Question[]): Promise<void> {
+    const db = await this.getDB();
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction('questions', 'readwrite');
+      const store = tx.objectStore('questions');
+      store.clear();
+      questions.forEach(q => store.put(q));
+      tx.oncomplete = () => resolve();
+      tx.onerror = () => reject(tx.error);
+    });
+  }
+
   public async deleteQuestion(id: string): Promise<void> {
     const db = await this.getDB();
     return new Promise((resolve, reject) => {
@@ -604,20 +616,27 @@ class DatabaseManager {
       return this.sortAndRankSessions(Array.from(bestMap.values()));
     }
 
-    if (view === 'player_history' && targetPlayer) {
+    if (view === 'player_history' && targetPlayer && targetPlayer.trim()) {
       const norm = targetPlayer.trim().toLowerCase();
-      const filtered = sessions.filter(s => s.normalizedPlayerName === norm);
+      const filtered = sessions.filter(s => s.normalizedPlayerName.includes(norm));
       return this.sortAndRankSessions(filtered);
     }
 
     return this.sortAndRankSessions(sessions);
   }
 
-  public async checkIsPersonalBest(normalizedName: string, newScore: number): Promise<boolean> {
+  public async checkIsPersonalBest(
+    normalizedName: string,
+    newScore: number,
+    excludeSessionId?: string
+  ): Promise<boolean> {
+    if (newScore <= 0) return false;
     const sessions = await this.getSessions();
-    const playerSessions = sessions.filter(s => s.normalizedPlayerName === normalizedName);
-    if (playerSessions.length === 0) return true;
-    const highestPrevious = Math.max(...playerSessions.map(s => s.score));
+    const previousSessions = sessions.filter(
+      s => s.normalizedPlayerName === normalizedName && s.id !== excludeSessionId
+    );
+    if (previousSessions.length === 0) return true;
+    const highestPrevious = Math.max(...previousSessions.map(s => s.score));
     return newScore > highestPrevious;
   }
 

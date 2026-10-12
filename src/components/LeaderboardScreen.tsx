@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { 
   Trophy, 
   Calendar, 
@@ -8,14 +8,10 @@ import {
   Download, 
   ArrowLeft, 
   Users, 
-  Flame, 
-  Award, 
-  Clock,
   Sparkles,
   RefreshCw,
   Crown,
-  Medal,
-  Star
+  Medal
 } from 'lucide-react';
 import { LeaderboardItem } from '../types';
 import { dbManager } from '../utils/db';
@@ -43,18 +39,7 @@ export const LeaderboardScreen: React.FC<LeaderboardScreenProps> = ({
   const [totalPlayers, setTotalPlayers] = useState(0);
   const [totalGames, setTotalGames] = useState(0);
 
-  useEffect(() => {
-    loadLeaderboardData(true);
-    syncClient.triggerSync().then(() => {
-      loadLeaderboardData(false);
-    }).catch(() => {});
-    const unsub = syncClient.subscribe(() => {
-      loadLeaderboardData(false);
-    });
-    return () => unsub();
-  }, [activeTab]);
-
-  const loadLeaderboardData = async (showSpinner: boolean = false) => {
+  const loadLeaderboardData = useCallback(async (showSpinner: boolean = false) => {
     if (showSpinner) setLoading(true);
     try {
       const data = await dbManager.getLeaderboard(activeTab, searchTerm);
@@ -71,7 +56,22 @@ export const LeaderboardScreen: React.FC<LeaderboardScreenProps> = ({
     } finally {
       if (showSpinner) setLoading(false);
     }
-  };
+  }, [activeTab, searchTerm]);
+
+  useEffect(() => {
+    loadLeaderboardData(true);
+    syncClient.triggerSync().then(() => {
+      loadLeaderboardData(false);
+    }).catch(() => {});
+  }, [activeTab]);
+
+  useEffect(() => {
+    loadLeaderboardData(false);
+    const unsub = syncClient.subscribe(() => {
+      loadLeaderboardData(false);
+    });
+    return () => unsub();
+  }, [loadLeaderboardData]);
 
   const handleExportCsv = () => {
     soundManager.playClick();
@@ -503,7 +503,9 @@ export const LeaderboardScreen: React.FC<LeaderboardScreenProps> = ({
                   <Users className="w-10 h-10 text-slate-600 mx-auto mb-2" />
                   <p className="text-sm font-semibold text-slate-300">
                     {isSearching
-                      ? `No players from Rank 4 onward match "${searchTerm}".`
+                      ? (matchesSearch(top1) || matchesSearch(top2) || matchesSearch(top3)
+                          ? `Matching records for "${searchTerm}" are featured on the Top 1–3 Championship Podium above!`
+                          : `No players from Rank 4 onward match "${searchTerm}".`)
                       : entries.length <= 3 && entries.length > 0
                       ? 'All active contenders are currently featured on the Top 1–3 Championship Podium above!'
                       : 'No runner-up ranking records found.'}

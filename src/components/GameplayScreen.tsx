@@ -30,11 +30,6 @@ export const GameplayScreen: React.FC<GameplayScreenProps> = ({
   const timerDuration = settings.timerSeconds || 30;
   const [timeRemaining, setTimeRemaining] = useState<number>(timerDuration);
 
-  // Accumulated answers for fair end-of-game scoring
-  const [recordedAnswers, setRecordedAnswers] = useState<
-    { questionId: string; selectedAnswer: string | null; timeSpent: number }[]
-  >([]);
-
   // Refs for race-condition-free timer and zero unwanted resets
   const sessionStartTimeRef = useRef<number>(Date.now());
   const questionStartTimeRef = useRef<number>(Date.now());
@@ -121,7 +116,6 @@ export const GameplayScreen: React.FC<GameplayScreenProps> = ({
 
     const nextAnswers = [...recordedAnswersRef.current, entry];
     recordedAnswersRef.current = nextAnswers;
-    setRecordedAnswers(nextAnswers);
 
     if (currIdx + 1 < questionsRef.current.length) {
       setSelectedOption(null);

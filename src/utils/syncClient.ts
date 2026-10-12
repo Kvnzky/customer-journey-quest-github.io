@@ -254,6 +254,15 @@ class SyncClient {
             if (queued.length > 0) {
               await dbManager.markSessionsSynced(queued.map(s => s.id));
               this.pendingCount = 0;
+              if (typeof window !== 'undefined') {
+                try {
+                  const payload = { type: 'SESSIONS_UPDATED', timestamp: Date.now() };
+                  localStorage.setItem('quest_sessions_sync', JSON.stringify(payload));
+                  if (this.channel) {
+                    this.channel.postMessage(payload);
+                  }
+                } catch {}
+              }
               console.log(`[SyncClient] Queued sessions successfully synchronized.`);
             }
             if (Array.isArray(pushData.sessions)) {

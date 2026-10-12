@@ -1,7 +1,9 @@
 import fs from 'fs';
+import os from 'os';
 import path from 'path';
 
 let inMemoryStore = null;
+const TMP_STORE_PATH = path.join(os.tmpdir(), 'quest-sync-data.json');
 
 const DEFAULT_STORE = {
   revision: 6,
@@ -15,7 +17,8 @@ const DEFAULT_STORE = {
     shuffleAnswers: true,
     allowNegativePoints: false,
     categories: ['Marketing', 'PreSales', 'Proposals', 'Guardian', 'Digital'],
-    defaultPointsPerQuestion: 10
+    defaultPointsPerQuestion: 20,
+    competitionMode: true
   },
   sessions: [],
   deletedSessionIds: [],
@@ -46,10 +49,10 @@ export function getStore() {
     return normalizeStore(inMemoryStore);
   }
 
-  // 1. Try reading /tmp/sync-data.json
+  // 1. Try reading temp store path
   try {
-    if (fs.existsSync('/tmp/sync-data.json')) {
-      const raw = fs.readFileSync('/tmp/sync-data.json', 'utf8');
+    if (fs.existsSync(TMP_STORE_PATH)) {
+      const raw = fs.readFileSync(TMP_STORE_PATH, 'utf8');
       inMemoryStore = normalizeStore(JSON.parse(raw));
       return inMemoryStore;
     }
@@ -72,9 +75,9 @@ export function getStore() {
 export function saveStore(store) {
   inMemoryStore = normalizeStore(store);
   try {
-    fs.writeFileSync('/tmp/sync-data.json', JSON.stringify(inMemoryStore, null, 2), 'utf8');
+    fs.writeFileSync(TMP_STORE_PATH, JSON.stringify(inMemoryStore, null, 2), 'utf8');
   } catch (err) {
-    console.warn('[SyncAPI] Could not write to /tmp:', err);
+    console.warn('[SyncAPI] Could not write to temp store:', err);
   }
 }
 
