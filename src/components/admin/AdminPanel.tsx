@@ -1262,7 +1262,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onLogout }) => {
               </span>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
               <div className="bg-[#081525] p-4 rounded-xl border border-[#193a5e]">
                 <div className="text-[10px] text-[#7ea0b7] uppercase font-mono">Current Revision</div>
                 <div className="text-2xl font-bold text-amber-300 font-mono mt-1">r{syncStatus.localRevision}</div>
@@ -1270,37 +1270,55 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onLogout }) => {
               </div>
 
               <div className="bg-[#081525] p-4 rounded-xl border border-[#193a5e]">
+                <div className="text-[10px] text-[#7ea0b7] uppercase font-mono">Last Sync Check</div>
+                <div className="text-xl font-bold text-slate-200 font-mono mt-1 truncate">{syncStatus.lastSyncTime || 'Active'}</div>
+                <div className="text-[11px] text-emerald-400 mt-0.5 font-mono">Status: Connected</div>
+              </div>
+
+              <div className="bg-[#081525] p-4 rounded-xl border border-[#193a5e]">
+                <div className="text-[10px] text-[#7ea0b7] uppercase font-mono">Pending Records</div>
+                <div className="text-2xl font-bold text-cyan-300 font-mono mt-1">{syncStatus.pendingSyncCount}</div>
+                <div className="text-[11px] text-slate-400 mt-0.5">Total sessions: {sessions.length}</div>
+              </div>
+
+              <div className="bg-[#081525] p-4 rounded-xl border border-[#193a5e]">
                 <div className="text-[10px] text-[#7ea0b7] uppercase font-mono">Published Questions</div>
                 <div className="text-2xl font-bold text-emerald-400 font-mono mt-1">{publishedQuestionsCount}</div>
                 <div className="text-[11px] text-slate-400 mt-0.5">({draftQuestionsCount} drafts not deployed)</div>
               </div>
+            </div>
 
-              <div className="bg-[#081525] p-4 rounded-xl border border-[#193a5e]">
-                <div className="text-[10px] text-[#7ea0b7] uppercase font-mono">Total Recorded Sessions</div>
-                <div className="text-2xl font-bold text-cyan-300 font-mono mt-1">{sessions.length}</div>
-                <div className="text-[11px] text-slate-400 mt-0.5">Across all client devices</div>
-              </div>
+            {/* Live Sync Callout */}
+            <div className="p-4 rounded-xl bg-teal-950/30 border border-teal-500/30 mb-6">
+              <h5 className="text-xs font-bold text-teal-300 uppercase tracking-wider mb-1 flex items-center gap-1.5 font-mono">
+                <CheckCircle2 className="w-3.5 h-3.5 text-[#38efbf]" />
+                Live Cloud Synchronization Active
+              </h5>
+              <p className="text-xs text-[#8da2b5] leading-relaxed">
+                Questions, question timer settings, and scoring parameters are kept in continuous sync with all game clients. Changes published from this Admin Portal are instantly applied to the live game via the cloud API and real-time broadcast channel.
+              </p>
             </div>
 
             <div className="bg-[#081525] p-4 rounded-xl border border-[#183658] mb-6 space-y-3">
               <div className="flex items-center justify-between text-xs">
                 <span className="text-slate-300 font-semibold">Synchronization Server URL</span>
-                <span className="text-slate-400 font-mono text-[11px]">Default: http://localhost:4820</span>
+                <span className="text-slate-400 font-mono text-[11px]">Default: Cloud API (Same Origin)</span>
               </div>
               <div className="flex items-center gap-2">
                 <input
                   type="text"
                   defaultValue={syncClient.getSyncUrl()}
+                  placeholder="(Cloud API Auto-Detected)"
                   onBlur={(e) => syncClient.setSyncUrl(e.target.value)}
                   className="flex-1 px-3 py-2 rounded-lg bg-[#05111d] border border-slate-700 text-white font-mono text-xs focus:outline-none focus:border-[#38efbf]"
                 />
                 <button
-                  onClick={() => {
-                    syncClient.triggerSync().then(() => showToast('Sync status refreshed.'));
-                  }}
-                  className="py-2 px-4 rounded-lg bg-[#0c243a] hover:bg-[#122e4d] border border-[#1c456f] text-slate-200 text-xs font-semibold cursor-pointer"
+                  onClick={handleManualSyncAndRefresh}
+                  disabled={isRefreshing}
+                  className="py-2 px-4 rounded-lg bg-[#0c243a] hover:bg-[#122e4d] border border-[#1c456f] text-slate-200 hover:text-white text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer disabled:opacity-50"
                 >
-                  Test Connection
+                  <RefreshCw className={`w-3.5 h-3.5 text-[#38efbf] ${isRefreshing ? 'animate-spin' : ''}`} />
+                  <span>{isRefreshing ? 'Checking...' : 'Synchronize Now'}</span>
                 </button>
               </div>
             </div>

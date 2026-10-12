@@ -260,8 +260,6 @@ export function App() {
       {/* App Info Modal */}
       {isInfoModalOpen && (
         <AppInfoModal
-          syncStatus={syncStatus}
-          deviceId={deviceId}
           onClose={() => setIsInfoModalOpen(false)}
         />
       )}
