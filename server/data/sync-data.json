@@ -1,0 +1,1098 @@
+{
+  "revision": 6,
+  "lastPublished": "2026-10-12T04:58:06.562Z",
+  "questions": [
+    {
+      "id": "quest-dig-01",
+      "text": "Apex Industries needs 2,500 employees to adopt the new self-service digital workplace. Which strategy achieves maximum user engagement?",
+      "options": [
+        "Deploy interactive contextual in-app guidance, gamified learning paths, and champion recognition programs",
+        "Mandate all employees read a static 200-page PDF over the weekend",
+        "Threaten disciplinary action for employees who log into the legacy portal",
+        "Disable all training resources and expect intuitive usage"
+      ],
+      "correctAnswer": "Deploy interactive contextual in-app guidance, gamified learning paths, and champion recognition programs",
+      "explanation": "Modern digital adoption thrives on micro-learning, embedded walkthroughs, and internal peer champions.",
+      "category": "Digital",
+      "points": 10,
+      "status": "published",
+      "createdAt": "2026-10-12T01:18:29.057Z",
+      "updatedAt": "2026-10-12T01:18:29.057Z"
+    },
+    {
+      "id": "quest-dig-02",
+      "text": "What digital metric gives Apex's executive steering committee the clearest view of system health and customer experience?",
+      "options": [
+        "Task completion rate, Daily Active Users (DAU/MAU), and Customer Satisfaction Score (CSAT)",
+        "Total megabytes of raw database backup files stored",
+        "Number of font changes made in the dashboard settings",
+        "How many times the login screen was reloaded"
+      ],
+      "correctAnswer": "Task completion rate, Daily Active Users (DAU/MAU), and Customer Satisfaction Score (CSAT)",
+      "explanation": "Product adoption indices, completion velocity, and satisfaction benchmarks provide true behavioral indicators.",
+      "category": "Digital",
+      "points": 10,
+      "status": "published",
+      "createdAt": "2026-10-12T01:18:29.057Z",
+      "updatedAt": "2026-10-12T01:18:29.057Z"
+    },
+    {
+      "id": "quest-dig-03",
+      "text": "Apex's operations team needs real-time automated data synchronization between the platform and their ERP. What is the digital best practice?",
+      "options": [
+        "Implement event-driven webhooks and authenticated REST APIs with idempotency and retry queues",
+        "Have a staff member manually export and re-upload CSV spreadsheets twice daily",
+        "Hardcode database credentials into an unencrypted public script",
+        "Rely on nightly batch processing with zero error alerting"
+      ],
+      "correctAnswer": "Implement event-driven webhooks and authenticated REST APIs with idempotency and retry queues",
+      "explanation": "Event-driven, idempotent webhook architectures guarantee real-time integrity and fault resilience.",
+      "category": "Digital",
+      "points": 10,
+      "status": "published",
+      "createdAt": "2026-10-12T01:18:29.057Z",
+      "updatedAt": "2026-10-12T01:18:29.057Z"
+    },
+    {
+      "id": "quest-dig-04",
+      "text": "At the 1-year mark, Apex achieves 95% digital adoption and 40% operational cost savings. What is the ultimate partnership milestone?",
+      "options": [
+        "Publish a co-branded global case study and expand the digital transformation partnership into new enterprise units",
+        "Double their software price overnight without warning",
+        "Cancel their account because they no longer need support",
+        "Archive the project files and discontinue updates"
+      ],
+      "correctAnswer": "Publish a co-branded global case study and expand the digital transformation partnership into new enterprise units",
+      "explanation": "Turning a happy enterprise client into an industry advocate completes the Customer Journey Quest from first click to lifetime trust!",
+      "category": "Digital",
+      "points": 10,
+      "status": "published",
+      "createdAt": "2026-10-12T01:18:29.057Z",
+      "updatedAt": "2026-10-12T01:18:29.057Z"
+    },
+    {
+      "id": "quest-guard-01",
+      "text": "Contract signed! Apex Industries moves to Day 1 onboarding. What is the Guardian (Customer Success & Advocacy) team's top priority?",
+      "options": [
+        "Host a structured kickoff, align success metrics, establish governance cadences, and secure early quick wins",
+        "Hand off a 500-page manual and disappear until the annual contract renewal date",
+        "Assume the customer will self-implement without any onboarding assistance",
+        "Upsell additional expensive modules before delivering the core solution"
+      ],
+      "correctAnswer": "Host a structured kickoff, align success metrics, establish governance cadences, and secure early quick wins",
+      "explanation": "The first 30 days dictate customer retention. Early momentum and aligned governance solidify trust.",
+      "category": "Guardian",
+      "points": 10,
+      "status": "published",
+      "createdAt": "2026-10-12T01:18:29.057Z",
+      "updatedAt": "2026-10-12T01:18:29.057Z"
+    },
+    {
+      "id": "quest-guard-02",
+      "text": "Apex's security auditor issues an emergency SOC 2 and GDPR compliance audit query. How does the Guardian team protect trust?",
+      "options": [
+        "Promptly provide verified SOC 2 Type II reports, security whitepapers, and direct access to compliance officers",
+        "Dismiss the audit request as unnecessary bureaucracy",
+        "Delay responses for weeks hoping the auditor drops the inquiry",
+        "Provide outdated self-attestation certificates without external audits"
+      ],
+      "correctAnswer": "Promptly provide verified SOC 2 Type II reports, security whitepapers, and direct access to compliance officers",
+      "explanation": "Transparent, rapid, and authoritative compliance verification reassures enterprise risk management teams.",
+      "category": "Guardian",
+      "points": 10,
+      "status": "published",
+      "createdAt": "2026-10-12T01:18:29.057Z",
+      "updatedAt": "2026-10-12T01:18:29.057Z"
+    },
+    {
+      "id": "quest-guard-03",
+      "text": "Six months into production, Apex submits a critical Severity-1 issue impacting user workflows. What is the correct Guardian protocol?",
+      "options": [
+        "Acknowledge immediately, open bridge with incident engineering, provide 30-min status cadences, and conduct a Root Cause Analysis (RCA)",
+        "Downgrade the ticket priority so internal SLA metrics are not breached",
+        "Blame Apex's internal system administrators in the public ticket response",
+        "Close the ticket automatically stating 'working as intended'"
+      ],
+      "correctAnswer": "Acknowledge immediately, open bridge with incident engineering, provide 30-min status cadences, and conduct a Root Cause Analysis (RCA)",
+      "explanation": "During critical incidents, proactive communication, rapid triage, and blameless post-mortems preserve customer loyalty.",
+      "category": "Guardian",
+      "points": 10,
+      "status": "published",
+      "createdAt": "2026-10-12T01:18:29.057Z",
+      "updatedAt": "2026-10-12T01:18:29.057Z"
+    },
+    {
+      "id": "quest-guard-04",
+      "text": "To proactively safeguard account health and prevent churn, how should the Guardian team conduct Executive Business Reviews (EBRs)?",
+      "options": [
+        "Quarterly sessions highlighting verified ROI outcomes, health scores, and collaborative future roadmaps",
+        "Only when the contract is 10 days away from expiration",
+        "Exclusively when something breaks and the client threatens legal action",
+        "Never; written automated monthly invoice receipts are sufficient"
+      ],
+      "correctAnswer": "Quarterly sessions highlighting verified ROI outcomes, health scores, and collaborative future roadmaps",
+      "explanation": "Regular Quarterly Business Reviews (QBRs/EBRs) ensure ongoing value realization and reinforce executive alignment.",
+      "category": "Guardian",
+      "points": 10,
+      "status": "published",
+      "createdAt": "2026-10-12T01:18:29.057Z",
+      "updatedAt": "2026-10-12T01:18:29.057Z"
+    },
+    {
+      "id": "quest-mkt-01",
+      "text": "Apex Industries visits our digital portal exploring enterprise transformation. What is the most effective approach to capture their initial interest?",
+      "options": [
+        "Deliver an interactive value calculator showing industry-specific ROI benchmarks",
+        "Trigger an unskippable full-screen sign-up modal immediately upon landing",
+        "Redirect them automatically to a generic contact form without product context",
+        "Display static technical API documentation with no business benefits"
+      ],
+      "correctAnswer": "Deliver an interactive value calculator showing industry-specific ROI benchmarks",
+      "explanation": "High-intent enterprise prospects engage best with personalized, value-oriented benchmarks tailored to their industry challenges.",
+      "category": "Marketing",
+      "points": 10,
+      "status": "published",
+      "createdAt": "2026-10-12T01:18:29.055Z",
+      "updatedAt": "2026-10-12T01:18:29.057Z"
+    },
+    {
+      "id": "quest-mkt-02",
+      "text": "Apex's VP of Operations downloads our enterprise whitepaper. What is the optimal next marketing trigger to advance their journey?",
+      "options": [
+        "Send a relevant follow-up case study highlighting quantifiable operational efficiency gains",
+        "Have a sales rep immediately call their personal mobile phone multiple times",
+        "Remove their email from the nurturing sequence to avoid overwhelming them",
+        "Bombard them with hourly automated promotional discount emails"
+      ],
+      "correctAnswer": "Send a relevant follow-up case study highlighting quantifiable operational efficiency gains",
+      "explanation": "Contextual nurture campaigns that reinforce business outcomes build trust faster than aggressive cold-calling.",
+      "category": "Marketing",
+      "points": 10,
+      "status": "published",
+      "createdAt": "2026-10-12T01:18:29.057Z",
+      "updatedAt": "2026-10-12T01:18:29.057Z"
+    },
+    {
+      "id": "quest-mkt-03",
+      "text": "Apex Industries engages with three consecutive thought-leadership posts on LinkedIn. How should marketing score and handle this lead?",
+      "options": [
+        "Elevate lead score to 'Marketing Qualified Lead' (MQL) and trigger tailored solution briefing",
+        "Down-rank the account because social media interactions indicate low purchase intent",
+        "Block their domain to prevent competitor intelligence gathering",
+        "Ignore social engagement until they submit a formal RFP"
+      ],
+      "correctAnswer": "Elevate lead score to 'Marketing Qualified Lead' (MQL) and trigger tailored solution briefing",
+      "explanation": "Multiple executive engagements across content pieces signal active discovery and warrant an upgraded lead status.",
+      "category": "Marketing",
+      "points": 10,
+      "status": "published",
+      "createdAt": "2026-10-12T01:18:29.057Z",
+      "updatedAt": "2026-10-12T01:18:29.057Z"
+    },
+    {
+      "id": "quest-mkt-04",
+      "text": "Which marketing KPI most accurately indicates that Apex Industries' buying committee is genuinely aligned with our brand?",
+      "options": [
+        "Multi-stakeholder content consumption across business, security, and technical pillars",
+        "Raw page-view counts by anonymous web crawlers",
+        "Single click on a generic display banner ad",
+        "Social media follower count of the corporate page"
+      ],
+      "correctAnswer": "Multi-stakeholder content consumption across business, security, and technical pillars",
+      "explanation": "Enterprise decisions are made by multi-disciplinary committees; cross-functional engagement is the strongest buying signal.",
+      "category": "Marketing",
+      "points": 10,
+      "status": "published",
+      "createdAt": "2026-10-12T01:18:29.057Z",
+      "updatedAt": "2026-10-12T01:18:29.057Z"
+    },
+    {
+      "id": "quest-prop-01",
+      "text": "When drafting the Executive Summary for Apex Industries' multi-million dollar proposal, what should lead the narrative?",
+      "options": [
+        "Apex Industries' strategic objectives, business impact, and measurable return on investment",
+        "A 10-page detailed history of our company's founding date and organizational hierarchy",
+        "A raw pricing breakdown without any contextual value proposition",
+        "A generic template with another client's company name left in the header"
+      ],
+      "correctAnswer": "Apex Industries' strategic objectives, business impact, and measurable return on investment",
+      "explanation": "Executive decision-makers focus on their strategic ROI and business transformation, not generic supplier biographies.",
+      "category": "Proposals",
+      "points": 10,
+      "status": "published",
+      "createdAt": "2026-10-12T01:18:29.057Z",
+      "updatedAt": "2026-10-12T01:18:29.057Z"
+    },
+    {
+      "id": "quest-prop-02",
+      "text": "Apex's procurement team requests an aggressive 30% discount. What is the most strategic proposal counter-offer to preserve margin and value?",
+      "options": [
+        "Offer multi-year commitment terms or adjusted deployment phasing in exchange for volume concessions",
+        "Instantly grant the 30% discount without requesting any contract term concessions",
+        "Refuse to negotiate and terminate all communications immediately",
+        "Secretly reduce security and support levels without notifying the client"
+      ],
+      "correctAnswer": "Offer multi-year commitment terms or adjusted deployment phasing in exchange for volume concessions",
+      "explanation": "Negotiating on terms, duration, and scope protects commercial profitability while demonstrating partnership flexibility.",
+      "category": "Proposals",
+      "points": 10,
+      "status": "published",
+      "createdAt": "2026-10-12T01:18:29.057Z",
+      "updatedAt": "2026-10-12T01:18:29.057Z"
+    },
+    {
+      "id": "quest-prop-03",
+      "text": "Apex requests customized Service Level Agreements (SLAs) with 99.99% uptime. How should the Proposals team structure the commitment?",
+      "options": [
+        "Validate SLA feasibility with Engineering, define maintenance windows, and tie credits to clear tiered parameters",
+        "Accept 100% uptime with unlimited financial liability without engineering review",
+        "Provide a vague non-binding verbal promise with no contractual documentation",
+        "Reject all SLA requests as non-standard"
+      ],
+      "correctAnswer": "Validate SLA feasibility with Engineering, define maintenance windows, and tie credits to clear tiered parameters",
+      "explanation": "A robust proposal balances realistic technical operational capacity with legally sound and reassuring commitments.",
+      "category": "Proposals",
+      "points": 10,
+      "status": "published",
+      "createdAt": "2026-10-12T01:18:29.057Z",
+      "updatedAt": "2026-10-12T01:18:29.057Z"
+    },
+    {
+      "id": "quest-prop-04",
+      "text": "Which element in Apex Industries' commercial proposal ensures seamless post-signature transition to implementation?",
+      "options": [
+        "A clear Responsibility Assignment Matrix (RACI) and detailed 90-day milestone rollout roadmap",
+        "A single line stating 'Delivery dates to be determined after payment'",
+        "An ambiguous scope of work leaving deliverables undefined",
+        "Excluding project management resources to artificially lower the headline price"
+      ],
+      "correctAnswer": "A clear Responsibility Assignment Matrix (RACI) and detailed 90-day milestone rollout roadmap",
+      "explanation": "Clear accountability and defined milestone roadmaps prevent post-sale friction and foster confidence.",
+      "category": "Proposals",
+      "points": 10,
+      "status": "published",
+      "createdAt": "2026-10-12T01:18:29.057Z",
+      "updatedAt": "2026-10-12T01:18:29.057Z"
+    },
+    {
+      "id": "quest-ps-01",
+      "text": "During the initial technical discovery session with Apex Industries' CTO, what is the primary objective of the PreSales Architect?",
+      "options": [
+        "Uncover underlying architecture pain points, data flow constraints, and strategic business goals",
+        "Deliver a generic 80-slide presentation without allowing questions",
+        "Rush straight into contract pricing without understanding system requirements",
+        "Guarantee impossible custom features to win the deal at any cost"
+      ],
+      "correctAnswer": "Uncover underlying architecture pain points, data flow constraints, and strategic business goals",
+      "explanation": "Effective PreSales begins with deep consultative discovery to align technological capabilities with the customer's core challenges.",
+      "category": "PreSales",
+      "points": 10,
+      "status": "published",
+      "createdAt": "2026-10-12T01:18:29.057Z",
+      "updatedAt": "2026-10-12T01:18:29.057Z"
+    },
+    {
+      "id": "quest-ps-02",
+      "text": "Apex Industries asks if our platform can support 100,000 concurrent transactions with sub-second latency. How should PreSales respond?",
+      "options": [
+        "Provide validated performance stress-test benchmarks, reference architectures, and client case studies",
+        "Give an immediate verbal guarantee without verifying backend capacity",
+        "Evade the question and redirect to user interface aesthetics",
+        "Advise them that 100,000 transactions is unnecessary for any company"
+      ],
+      "correctAnswer": "Provide validated performance stress-test benchmarks, reference architectures, and client case studies",
+      "explanation": "Trust is built on verifiable technical proof, documented benchmarks, and proven production scalability.",
+      "category": "PreSales",
+      "points": 10,
+      "status": "published",
+      "createdAt": "2026-10-12T01:18:29.057Z",
+      "updatedAt": "2026-10-12T01:18:29.057Z"
+    },
+    {
+      "id": "quest-ps-03",
+      "text": "When conducting a Proof of Concept (PoC) with Apex Industries, what is essential for ensuring a decisive win?",
+      "options": [
+        "Agreeing in advance on 3-5 clearly measurable, objective success criteria with explicit sign-off milestones",
+        "Allowing an open-ended testing period with infinite feature requests",
+        "Providing test credentials and leaving the client to test completely unassisted",
+        "Testing only trivial edge cases that don't reflect daily enterprise operations"
+      ],
+      "correctAnswer": "Agreeing in advance on 3-5 clearly measurable, objective success criteria with explicit sign-off milestones",
+      "explanation": "A structured PoC with pre-agreed evaluation criteria prevents scope creep and leads directly to commercial approval.",
+      "category": "PreSales",
+      "points": 10,
+      "status": "published",
+      "createdAt": "2026-10-12T01:18:29.057Z",
+      "updatedAt": "2026-10-12T01:18:29.057Z"
+    },
+    {
+      "id": "quest-ps-04",
+      "text": "Apex asks for an architectural integration with their legacy on-premise mainframe. What is the recommended PreSales stance?",
+      "options": [
+        "Demonstrate our secure hybrid gateway and pre-built connector patterns with clear data mapping",
+        "Refuse to support any on-premise infrastructure",
+        "Insist Apex rewrite their 20-year-old mainframe before continuing discussions",
+        "Pretend modern APIs don't need legacy data synchronization"
+      ],
+      "correctAnswer": "Demonstrate our secure hybrid gateway and pre-built connector patterns with clear data mapping",
+      "explanation": "Enterprise customers rely on hybrid continuity; presenting clear gateway patterns establishes credibility.",
+      "category": "PreSales",
+      "points": 10,
+      "status": "published",
+      "createdAt": "2026-10-12T01:18:29.057Z",
+      "updatedAt": "2026-10-12T01:18:29.057Z"
+    }
+  ],
+  "settings": {
+    "questionsPerGame": 5,
+    "timerSeconds": 20,
+    "randomSelection": false,
+    "shuffleQuestions": false,
+    "shuffleAnswers": true,
+    "allowNegativePoints": false,
+    "categories": [
+      "Marketing",
+      "PreSales",
+      "Proposals",
+      "Guardian",
+      "Digital"
+    ],
+    "defaultPointsPerQuestion": 10,
+    "competitionMode": true
+  },
+  "sessions": [
+    {
+      "id": "sess-1791769937919-z5qs86",
+      "deviceId": "dev-mv4k8uka-bsw32t",
+      "playerName": "test123",
+      "normalizedPlayerName": "test123",
+      "score": 40,
+      "correctCount": 4,
+      "incorrectCount": 1,
+      "totalQuestions": 5,
+      "completedCount": 5,
+      "unansweredCount": 0,
+      "durationSeconds": 79,
+      "status": "completed",
+      "gameOverReason": "COMPLETED",
+      "questionResults": [
+        {
+          "questionNumber": 1,
+          "questionText": "Apex Industries needs 2,500 employees to adopt the new self-service digital workplace. Which strategy achieves maximum user engagement?",
+          "category": "Digital",
+          "playerAnswer": "Deploy interactive contextual in-app guidance, gamified learning paths, and champion recognition programs",
+          "isCorrect": true,
+          "isTimedOut": false,
+          "pointsAwarded": 10,
+          "timeSpentSeconds": 19
+        },
+        {
+          "questionNumber": 2,
+          "questionText": "What digital metric gives Apex's executive steering committee the clearest view of system health and customer experience?",
+          "category": "Digital",
+          "playerAnswer": "Task completion rate, Daily Active Users (DAU/MAU), and Customer Satisfaction Score (CSAT)",
+          "isCorrect": true,
+          "isTimedOut": false,
+          "pointsAwarded": 10,
+          "timeSpentSeconds": 2
+        },
+        {
+          "questionNumber": 3,
+          "questionText": "Apex's operations team needs real-time automated data synchronization between the platform and their ERP. What is the digital best practice?",
+          "category": "Digital",
+          "playerAnswer": "Implement event-driven webhooks and authenticated REST APIs with idempotency and retry queues",
+          "isCorrect": true,
+          "isTimedOut": false,
+          "pointsAwarded": 10,
+          "timeSpentSeconds": 2
+        },
+        {
+          "questionNumber": 4,
+          "questionText": "At the 1-year mark, Apex achieves 95% digital adoption and 40% operational cost savings. What is the ultimate partnership milestone?",
+          "category": "Digital",
+          "playerAnswer": "Archive the project files and discontinue updates",
+          "isCorrect": false,
+          "isTimedOut": false,
+          "pointsAwarded": 0,
+          "timeSpentSeconds": 3
+        },
+        {
+          "questionNumber": 5,
+          "questionText": "Contract signed! Apex Industries moves to Day 1 onboarding. What is the Guardian (Customer Success & Advocacy) team's top priority?",
+          "category": "Guardian",
+          "playerAnswer": "Host a structured kickoff, align success metrics, establish governance cadences, and secure early quick wins",
+          "isCorrect": true,
+          "isTimedOut": false,
+          "pointsAwarded": 10,
+          "timeSpentSeconds": 2
+        }
+      ],
+      "questionSetRevision": 1,
+      "createdAt": "2026-10-12T01:52:17.919Z",
+      "synced": false
+    },
+    {
+      "id": "test-sess-1",
+      "playerName": "Alex Explorer",
+      "score": 95,
+      "correctCount": 9,
+      "incorrectCount": 1,
+      "totalQuestions": 10,
+      "completedCount": 10,
+      "unansweredCount": 0,
+      "durationSeconds": 42,
+      "status": "completed",
+      "createdAt": "2026-10-12T02:02:37.089Z"
+    },
+    {
+      "id": "sess-1791771062030-ni0m89",
+      "deviceId": "dev-mv4k8uka-bsw32t",
+      "playerName": "Test1234",
+      "normalizedPlayerName": "test1234",
+      "score": 10,
+      "correctCount": 1,
+      "incorrectCount": 2,
+      "totalQuestions": 3,
+      "completedCount": 2,
+      "unansweredCount": 1,
+      "durationSeconds": 429,
+      "status": "game_over_timeout",
+      "gameOverReason": "TIME_EXPIRED",
+      "questionResults": [
+        {
+          "questionNumber": 1,
+          "questionText": "Apex Industries needs 2,500 employees to adopt the new self-service digital workplace. Which strategy achieves maximum user engagement?",
+          "category": "Digital",
+          "playerAnswer": "Deploy interactive contextual in-app guidance, gamified learning paths, and champion recognition programs",
+          "isCorrect": true,
+          "isTimedOut": false,
+          "pointsAwarded": 10,
+          "timeSpentSeconds": 5
+        },
+        {
+          "questionNumber": 2,
+          "questionText": "What digital metric gives Apex's executive steering committee the clearest view of system health and customer experience?",
+          "category": "Digital",
+          "playerAnswer": "Total megabytes of raw database backup files stored",
+          "isCorrect": false,
+          "isTimedOut": false,
+          "pointsAwarded": 0,
+          "timeSpentSeconds": 30
+        },
+        {
+          "questionNumber": 3,
+          "questionText": "Apex's operations team needs real-time automated data synchronization between the platform and their ERP. What is the digital best practice?",
+          "category": "Digital",
+          "playerAnswer": null,
+          "isCorrect": false,
+          "isTimedOut": true,
+          "pointsAwarded": 0,
+          "timeSpentSeconds": 30
+        }
+      ],
+      "questionSetRevision": 2,
+      "createdAt": "2026-10-12T02:11:02.030Z",
+      "synced": false
+    },
+    {
+      "id": "sess-1791771614307-6cy1xm",
+      "deviceId": "dev-mv4k8uka-bsw32t",
+      "playerName": "test875",
+      "normalizedPlayerName": "test875",
+      "score": 20,
+      "correctCount": 2,
+      "incorrectCount": 3,
+      "totalQuestions": 5,
+      "completedCount": 5,
+      "unansweredCount": 0,
+      "durationSeconds": 113,
+      "status": "completed",
+      "gameOverReason": "COMPLETED",
+      "questionResults": [
+        {
+          "questionNumber": 1,
+          "questionText": "Apex Industries visits our digital portal exploring enterprise transformation. What is the most effective approach to capture their initial interest?",
+          "category": "Marketing",
+          "playerAnswer": "Trigger an unskippable full-screen sign-up modal immediately upon landing",
+          "isCorrect": false,
+          "isTimedOut": false,
+          "pointsAwarded": 0,
+          "timeSpentSeconds": 1
+        },
+        {
+          "questionNumber": 2,
+          "questionText": "During the initial technical discovery session with Apex Industries' CTO, what is the primary objective of the PreSales Architect?",
+          "category": "PreSales",
+          "playerAnswer": "Rush straight into contract pricing without understanding system requirements",
+          "isCorrect": false,
+          "isTimedOut": false,
+          "pointsAwarded": 0,
+          "timeSpentSeconds": 1
+        },
+        {
+          "questionNumber": 3,
+          "questionText": "When drafting the Executive Summary for Apex Industries' multi-million dollar proposal, what should lead the narrative?",
+          "category": "Proposals",
+          "playerAnswer": "A raw pricing breakdown without any contextual value proposition",
+          "isCorrect": false,
+          "isTimedOut": false,
+          "pointsAwarded": 0,
+          "timeSpentSeconds": 1
+        },
+        {
+          "questionNumber": 4,
+          "questionText": "Contract signed! Apex Industries moves to Day 1 onboarding. What is the Guardian (Customer Success & Advocacy) team's top priority?",
+          "category": "Guardian",
+          "playerAnswer": "Host a structured kickoff, align success metrics, establish governance cadences, and secure early quick wins",
+          "isCorrect": true,
+          "isTimedOut": false,
+          "pointsAwarded": 10,
+          "timeSpentSeconds": 1
+        },
+        {
+          "questionNumber": 5,
+          "questionText": "Apex Industries needs 2,500 employees to adopt the new self-service digital workplace. Which strategy achieves maximum user engagement?",
+          "category": "Digital",
+          "playerAnswer": "Deploy interactive contextual in-app guidance, gamified learning paths, and champion recognition programs",
+          "isCorrect": true,
+          "isTimedOut": false,
+          "pointsAwarded": 10,
+          "timeSpentSeconds": 1
+        }
+      ],
+      "questionSetRevision": 2,
+      "createdAt": "2026-10-12T02:20:14.307Z",
+      "synced": false
+    },
+    {
+      "id": "sess-1791772865494-o5z58p",
+      "deviceId": "dev-mv4k8uka-bsw32t",
+      "playerName": "dgzdgdt",
+      "normalizedPlayerName": "dgzdgdt",
+      "score": 10,
+      "correctCount": 1,
+      "incorrectCount": 4,
+      "totalQuestions": 5,
+      "completedCount": 3,
+      "unansweredCount": 2,
+      "durationSeconds": 95,
+      "status": "completed",
+      "gameOverReason": "COMPLETED",
+      "questionResults": [
+        {
+          "questionNumber": 1,
+          "questionText": "Apex Industries visits our digital portal exploring enterprise transformation. What is the most effective approach to capture their initial interest?",
+          "category": "Marketing",
+          "playerAnswer": null,
+          "isCorrect": false,
+          "isTimedOut": true,
+          "pointsAwarded": 0,
+          "timeSpentSeconds": 30
+        },
+        {
+          "questionNumber": 2,
+          "questionText": "During the initial technical discovery session with Apex Industries' CTO, what is the primary objective of the PreSales Architect?",
+          "category": "PreSales",
+          "playerAnswer": "Deliver a generic 80-slide presentation without allowing questions",
+          "isCorrect": false,
+          "isTimedOut": false,
+          "pointsAwarded": 0,
+          "timeSpentSeconds": 4
+        },
+        {
+          "questionNumber": 3,
+          "questionText": "When drafting the Executive Summary for Apex Industries' multi-million dollar proposal, what should lead the narrative?",
+          "category": "Proposals",
+          "playerAnswer": "A raw pricing breakdown without any contextual value proposition",
+          "isCorrect": false,
+          "isTimedOut": false,
+          "pointsAwarded": 0,
+          "timeSpentSeconds": 1
+        },
+        {
+          "questionNumber": 4,
+          "questionText": "Contract signed! Apex Industries moves to Day 1 onboarding. What is the Guardian (Customer Success & Advocacy) team's top priority?",
+          "category": "Guardian",
+          "playerAnswer": "Host a structured kickoff, align success metrics, establish governance cadences, and secure early quick wins",
+          "isCorrect": true,
+          "isTimedOut": false,
+          "pointsAwarded": 10,
+          "timeSpentSeconds": 30
+        },
+        {
+          "questionNumber": 5,
+          "questionText": "Apex Industries needs 2,500 employees to adopt the new self-service digital workplace. Which strategy achieves maximum user engagement?",
+          "category": "Digital",
+          "playerAnswer": null,
+          "isCorrect": false,
+          "isTimedOut": true,
+          "pointsAwarded": 0,
+          "timeSpentSeconds": 30
+        }
+      ],
+      "questionSetRevision": 2,
+      "createdAt": "2026-10-12T02:41:05.494Z",
+      "synced": false
+    },
+    {
+      "id": "sess-1791780596139-fita0j",
+      "deviceId": "dev-mv4k8uka-bsw32t",
+      "playerName": "test6666",
+      "normalizedPlayerName": "test6666",
+      "score": 40,
+      "correctCount": 4,
+      "incorrectCount": 6,
+      "totalQuestions": 10,
+      "completedCount": 10,
+      "unansweredCount": 0,
+      "durationSeconds": 14,
+      "status": "completed",
+      "gameOverReason": "COMPLETED",
+      "questionResults": [
+        {
+          "questionNumber": 1,
+          "questionText": "Apex Industries visits our digital portal exploring enterprise transformation. What is the most effective approach to capture their initial interest?",
+          "category": "Marketing",
+          "playerAnswer": "Redirect them automatically to a generic contact form without product context",
+          "isCorrect": false,
+          "isTimedOut": false,
+          "pointsAwarded": 0,
+          "maxPoints": 10,
+          "scoreTier": "ineffective",
+          "timeSpentSeconds": 2
+        },
+        {
+          "questionNumber": 2,
+          "questionText": "Apex's VP of Operations downloads our enterprise whitepaper. What is the optimal next marketing trigger to advance their journey?",
+          "category": "Marketing",
+          "playerAnswer": "Have a sales rep immediately call their personal mobile phone multiple times",
+          "isCorrect": false,
+          "isTimedOut": false,
+          "pointsAwarded": 0,
+          "maxPoints": 10,
+          "scoreTier": "ineffective",
+          "timeSpentSeconds": 1
+        },
+        {
+          "questionNumber": 3,
+          "questionText": "During the initial technical discovery session with Apex Industries' CTO, what is the primary objective of the PreSales Architect?",
+          "category": "PreSales",
+          "playerAnswer": "Guarantee impossible custom features to win the deal at any cost",
+          "isCorrect": false,
+          "isTimedOut": false,
+          "pointsAwarded": 0,
+          "maxPoints": 10,
+          "scoreTier": "ineffective",
+          "timeSpentSeconds": 1
+        },
+        {
+          "questionNumber": 4,
+          "questionText": "Apex Industries asks if our platform can support 100,000 concurrent transactions with sub-second latency. How should PreSales respond?",
+          "category": "PreSales",
+          "playerAnswer": "Provide validated performance stress-test benchmarks, reference architectures, and client case studies",
+          "isCorrect": true,
+          "isTimedOut": false,
+          "pointsAwarded": 10,
+          "maxPoints": 10,
+          "scoreTier": "optimal",
+          "timeSpentSeconds": 1
+        },
+        {
+          "questionNumber": 5,
+          "questionText": "When drafting the Executive Summary for Apex Industries' multi-million dollar proposal, what should lead the narrative?",
+          "category": "Proposals",
+          "playerAnswer": "Apex Industries' strategic objectives, business impact, and measurable return on investment",
+          "isCorrect": true,
+          "isTimedOut": false,
+          "pointsAwarded": 10,
+          "maxPoints": 10,
+          "scoreTier": "optimal",
+          "timeSpentSeconds": 1
+        },
+        {
+          "questionNumber": 6,
+          "questionText": "Apex's procurement team requests an aggressive 30% discount. What is the most strategic proposal counter-offer to preserve margin and value?",
+          "category": "Proposals",
+          "playerAnswer": "Refuse to negotiate and terminate all communications immediately",
+          "isCorrect": false,
+          "isTimedOut": false,
+          "pointsAwarded": 0,
+          "maxPoints": 10,
+          "scoreTier": "ineffective",
+          "timeSpentSeconds": 1
+        },
+        {
+          "questionNumber": 7,
+          "questionText": "Contract signed! Apex Industries moves to Day 1 onboarding. What is the Guardian (Customer Success & Advocacy) team's top priority?",
+          "category": "Guardian",
+          "playerAnswer": "Hand off a 500-page manual and disappear until the annual contract renewal date",
+          "isCorrect": false,
+          "isTimedOut": false,
+          "pointsAwarded": 0,
+          "maxPoints": 10,
+          "scoreTier": "ineffective",
+          "timeSpentSeconds": 1
+        },
+        {
+          "questionNumber": 8,
+          "questionText": "Apex's security auditor issues an emergency SOC 2 and GDPR compliance audit query. How does the Guardian team protect trust?",
+          "category": "Guardian",
+          "playerAnswer": "Delay responses for weeks hoping the auditor drops the inquiry",
+          "isCorrect": false,
+          "isTimedOut": false,
+          "pointsAwarded": 0,
+          "maxPoints": 10,
+          "scoreTier": "ineffective",
+          "timeSpentSeconds": 2
+        },
+        {
+          "questionNumber": 9,
+          "questionText": "Apex Industries needs 2,500 employees to adopt the new self-service digital workplace. Which strategy achieves maximum user engagement?",
+          "category": "Digital",
+          "playerAnswer": "Deploy interactive contextual in-app guidance, gamified learning paths, and champion recognition programs",
+          "isCorrect": true,
+          "isTimedOut": false,
+          "pointsAwarded": 10,
+          "maxPoints": 10,
+          "scoreTier": "optimal",
+          "timeSpentSeconds": 1
+        },
+        {
+          "questionNumber": 10,
+          "questionText": "What digital metric gives Apex's executive steering committee the clearest view of system health and customer experience?",
+          "category": "Digital",
+          "playerAnswer": "Task completion rate, Daily Active Users (DAU/MAU), and Customer Satisfaction Score (CSAT)",
+          "isCorrect": true,
+          "isTimedOut": false,
+          "pointsAwarded": 10,
+          "maxPoints": 10,
+          "scoreTier": "optimal",
+          "timeSpentSeconds": 1
+        }
+      ],
+      "questionSetRevision": 4,
+      "createdAt": "2026-10-12T04:49:56.140Z",
+      "synced": false
+    },
+    {
+      "id": "sess-1791780956962-5eks98",
+      "deviceId": "dev-mv4k8uka-bsw32t",
+      "playerName": "hfhxjfj",
+      "normalizedPlayerName": "hfhxjfj",
+      "score": 20,
+      "correctCount": 2,
+      "incorrectCount": 3,
+      "totalQuestions": 5,
+      "completedCount": 5,
+      "unansweredCount": 0,
+      "durationSeconds": 7,
+      "status": "completed",
+      "gameOverReason": "COMPLETED",
+      "questionResults": [
+        {
+          "questionNumber": 1,
+          "questionText": "Apex Industries visits our digital portal exploring enterprise transformation. What is the most effective approach to capture their initial interest?",
+          "category": "Marketing",
+          "playerAnswer": "Redirect them automatically to a generic contact form without product context",
+          "isCorrect": false,
+          "isTimedOut": false,
+          "pointsAwarded": 0,
+          "maxPoints": 10,
+          "scoreTier": "ineffective",
+          "timeSpentSeconds": 2
+        },
+        {
+          "questionNumber": 2,
+          "questionText": "During the initial technical discovery session with Apex Industries' CTO, what is the primary objective of the PreSales Architect?",
+          "category": "PreSales",
+          "playerAnswer": "Guarantee impossible custom features to win the deal at any cost",
+          "isCorrect": false,
+          "isTimedOut": false,
+          "pointsAwarded": 0,
+          "maxPoints": 10,
+          "scoreTier": "ineffective",
+          "timeSpentSeconds": 1
+        },
+        {
+          "questionNumber": 3,
+          "questionText": "When drafting the Executive Summary for Apex Industries' multi-million dollar proposal, what should lead the narrative?",
+          "category": "Proposals",
+          "playerAnswer": "Apex Industries' strategic objectives, business impact, and measurable return on investment",
+          "isCorrect": true,
+          "isTimedOut": false,
+          "pointsAwarded": 10,
+          "maxPoints": 10,
+          "scoreTier": "optimal",
+          "timeSpentSeconds": 1
+        },
+        {
+          "questionNumber": 4,
+          "questionText": "Contract signed! Apex Industries moves to Day 1 onboarding. What is the Guardian (Customer Success & Advocacy) team's top priority?",
+          "category": "Guardian",
+          "playerAnswer": "Assume the customer will self-implement without any onboarding assistance",
+          "isCorrect": false,
+          "isTimedOut": false,
+          "pointsAwarded": 0,
+          "maxPoints": 10,
+          "scoreTier": "ineffective",
+          "timeSpentSeconds": 2
+        },
+        {
+          "questionNumber": 5,
+          "questionText": "Apex Industries needs 2,500 employees to adopt the new self-service digital workplace. Which strategy achieves maximum user engagement?",
+          "category": "Digital",
+          "playerAnswer": "Deploy interactive contextual in-app guidance, gamified learning paths, and champion recognition programs",
+          "isCorrect": true,
+          "isTimedOut": false,
+          "pointsAwarded": 10,
+          "maxPoints": 10,
+          "scoreTier": "optimal",
+          "timeSpentSeconds": 1
+        }
+      ],
+      "questionSetRevision": 5,
+      "createdAt": "2026-10-12T04:55:56.962Z",
+      "synced": false
+    },
+    {
+      "id": "sess-1791781036415-xcyex2",
+      "deviceId": "dev-mv4k8uka-bsw32t",
+      "playerName": "ytuykjg",
+      "normalizedPlayerName": "ytuykjg",
+      "score": 0,
+      "correctCount": 0,
+      "incorrectCount": 5,
+      "totalQuestions": 5,
+      "completedCount": 5,
+      "unansweredCount": 0,
+      "durationSeconds": 6,
+      "status": "completed",
+      "gameOverReason": "COMPLETED",
+      "questionResults": [
+        {
+          "questionNumber": 1,
+          "questionText": "Apex Industries visits our digital portal exploring enterprise transformation. What is the most effective approach to capture their initial interest?",
+          "category": "Marketing",
+          "playerAnswer": "Display static technical API documentation with no business benefits",
+          "isCorrect": false,
+          "isTimedOut": false,
+          "pointsAwarded": 0,
+          "maxPoints": 10,
+          "scoreTier": "ineffective",
+          "timeSpentSeconds": 1
+        },
+        {
+          "questionNumber": 2,
+          "questionText": "During the initial technical discovery session with Apex Industries' CTO, what is the primary objective of the PreSales Architect?",
+          "category": "PreSales",
+          "playerAnswer": "Guarantee impossible custom features to win the deal at any cost",
+          "isCorrect": false,
+          "isTimedOut": false,
+          "pointsAwarded": 0,
+          "maxPoints": 10,
+          "scoreTier": "ineffective",
+          "timeSpentSeconds": 1
+        },
+        {
+          "questionNumber": 3,
+          "questionText": "When drafting the Executive Summary for Apex Industries' multi-million dollar proposal, what should lead the narrative?",
+          "category": "Proposals",
+          "playerAnswer": "A raw pricing breakdown without any contextual value proposition",
+          "isCorrect": false,
+          "isTimedOut": false,
+          "pointsAwarded": 0,
+          "maxPoints": 10,
+          "scoreTier": "ineffective",
+          "timeSpentSeconds": 1
+        },
+        {
+          "questionNumber": 4,
+          "questionText": "Contract signed! Apex Industries moves to Day 1 onboarding. What is the Guardian (Customer Success & Advocacy) team's top priority?",
+          "category": "Guardian",
+          "playerAnswer": "Upsell additional expensive modules before delivering the core solution",
+          "isCorrect": false,
+          "isTimedOut": false,
+          "pointsAwarded": 0,
+          "maxPoints": 10,
+          "scoreTier": "ineffective",
+          "timeSpentSeconds": 1
+        },
+        {
+          "questionNumber": 5,
+          "questionText": "Apex Industries needs 2,500 employees to adopt the new self-service digital workplace. Which strategy achieves maximum user engagement?",
+          "category": "Digital",
+          "playerAnswer": "Mandate all employees read a static 200-page PDF over the weekend",
+          "isCorrect": false,
+          "isTimedOut": false,
+          "pointsAwarded": 0,
+          "maxPoints": 10,
+          "scoreTier": "ineffective",
+          "timeSpentSeconds": 1
+        }
+      ],
+      "questionSetRevision": 5,
+      "createdAt": "2026-10-12T04:57:16.415Z",
+      "synced": false
+    },
+    {
+      "id": "sess-1791781528220-atvfxe",
+      "deviceId": "dev-mv4k8uka-bsw32t",
+      "playerName": "ddddd",
+      "normalizedPlayerName": "ddddd",
+      "score": 0,
+      "correctCount": 0,
+      "incorrectCount": 5,
+      "totalQuestions": 5,
+      "completedCount": 1,
+      "unansweredCount": 4,
+      "durationSeconds": 147,
+      "status": "completed",
+      "gameOverReason": "COMPLETED",
+      "questionResults": [
+        {
+          "questionNumber": 1,
+          "questionText": "Apex Industries visits our digital portal exploring enterprise transformation. What is the most effective approach to capture their initial interest?",
+          "category": "Marketing",
+          "playerAnswer": "Display static technical API documentation with no business benefits",
+          "isCorrect": false,
+          "isTimedOut": false,
+          "pointsAwarded": 0,
+          "maxPoints": 10,
+          "scoreTier": "ineffective",
+          "timeSpentSeconds": 8
+        },
+        {
+          "questionNumber": 2,
+          "questionText": "During the initial technical discovery session with Apex Industries' CTO, what is the primary objective of the PreSales Architect?",
+          "category": "PreSales",
+          "playerAnswer": null,
+          "isCorrect": false,
+          "isTimedOut": true,
+          "pointsAwarded": 0,
+          "maxPoints": 10,
+          "scoreTier": "timeout",
+          "timeSpentSeconds": 20
+        },
+        {
+          "questionNumber": 3,
+          "questionText": "When drafting the Executive Summary for Apex Industries' multi-million dollar proposal, what should lead the narrative?",
+          "category": "Proposals",
+          "playerAnswer": null,
+          "isCorrect": false,
+          "isTimedOut": true,
+          "pointsAwarded": 0,
+          "maxPoints": 10,
+          "scoreTier": "timeout",
+          "timeSpentSeconds": 20
+        },
+        {
+          "questionNumber": 4,
+          "questionText": "Contract signed! Apex Industries moves to Day 1 onboarding. What is the Guardian (Customer Success & Advocacy) team's top priority?",
+          "category": "Guardian",
+          "playerAnswer": null,
+          "isCorrect": false,
+          "isTimedOut": true,
+          "pointsAwarded": 0,
+          "maxPoints": 10,
+          "scoreTier": "timeout",
+          "timeSpentSeconds": 20
+        },
+        {
+          "questionNumber": 5,
+          "questionText": "Apex Industries needs 2,500 employees to adopt the new self-service digital workplace. Which strategy achieves maximum user engagement?",
+          "category": "Digital",
+          "playerAnswer": null,
+          "isCorrect": false,
+          "isTimedOut": true,
+          "pointsAwarded": 0,
+          "maxPoints": 10,
+          "scoreTier": "timeout",
+          "timeSpentSeconds": 20
+        }
+      ],
+      "questionSetRevision": 6,
+      "createdAt": "2026-10-12T05:05:28.221Z",
+      "synced": false
+    },
+    {
+      "id": "sess-1791781638946-wnuo0h",
+      "deviceId": "dev-mv4k8uka-bsw32t",
+      "playerName": "asedhxfh",
+      "normalizedPlayerName": "asedhxfh",
+      "score": 70,
+      "correctCount": 5,
+      "incorrectCount": 0,
+      "totalQuestions": 5,
+      "completedCount": 5,
+      "unansweredCount": 0,
+      "durationSeconds": 8,
+      "status": "completed",
+      "gameOverReason": "COMPLETED",
+      "questionResults": [
+        {
+          "questionNumber": 1,
+          "questionText": "Apex Industries is exploring ways to improve its operations. Your team has one chance to make a relevant first impression.",
+          "category": "Marketing",
+          "playerAnswer": "Send an executive overview email with relevant industry benchmarks",
+          "isCorrect": true,
+          "isTimedOut": false,
+          "pointsAwarded": 15,
+          "maxPoints": 20,
+          "scoreTier": "partial",
+          "timeSpentSeconds": 3
+        },
+        {
+          "questionNumber": 2,
+          "questionText": "During the initial technical discovery session with Apex Industries' CTO, what is the primary objective of the PreSales Architect?",
+          "category": "PreSales",
+          "playerAnswer": "Demonstrate standard off-the-shelf features without asking about customer infrastructure",
+          "isCorrect": true,
+          "isTimedOut": false,
+          "pointsAwarded": 10,
+          "maxPoints": 20,
+          "scoreTier": "partial",
+          "timeSpentSeconds": 1
+        },
+        {
+          "questionNumber": 3,
+          "questionText": "When drafting the Executive Summary for Apex Industries' multi-million dollar proposal, what should lead the narrative?",
+          "category": "Proposals",
+          "playerAnswer": "Apex Industries' strategic objectives, business impact, and measurable return on investment",
+          "isCorrect": true,
+          "isTimedOut": false,
+          "pointsAwarded": 20,
+          "maxPoints": 20,
+          "scoreTier": "optimal",
+          "timeSpentSeconds": 1
+        },
+        {
+          "questionNumber": 4,
+          "questionText": "Contract signed! Apex Industries moves to Day 1 onboarding. What is the Guardian (Customer Success & Advocacy) team's top priority?",
+          "category": "Guardian",
+          "playerAnswer": "Host a structured kickoff, align success metrics, establish governance cadences, and secure early quick wins",
+          "isCorrect": true,
+          "isTimedOut": false,
+          "pointsAwarded": 20,
+          "maxPoints": 20,
+          "scoreTier": "optimal",
+          "timeSpentSeconds": 1
+        },
+        {
+          "questionNumber": 5,
+          "questionText": "Apex Industries needs 2,500 employees to adopt the new self-service digital workplace. Which strategy achieves maximum user engagement?",
+          "category": "Digital",
+          "playerAnswer": "Mandate all employees read a static 200-page PDF over the weekend",
+          "isCorrect": true,
+          "isTimedOut": false,
+          "pointsAwarded": 5,
+          "maxPoints": 20,
+          "scoreTier": "partial",
+          "timeSpentSeconds": 1
+        }
+      ],
+      "questionSetRevision": 6,
+      "createdAt": "2026-10-12T05:07:18.946Z",
+      "synced": false
+    }
+  ]
+}

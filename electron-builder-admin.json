@@ -1,0 +1,32 @@
+{
+  "appId": "com.quest.customerjourney.admin",
+  "productName": "Customer Journey Quest - Admin Portal",
+  "copyright": "Copyright © 2026",
+  "directories": {
+    "output": "release/admin"
+  },
+  "files": [
+    "dist/**/*",
+    "electron/main-admin.cjs",
+    "electron/preload.cjs",
+    "package.json"
+  ],
+  "extraMetadata": {
+    "main": "electron/main-admin.cjs"
+  },
+  "win": {
+    "target": [
+      {
+        "target": "dir",
+        "arch": ["x64"]
+      },
+      {
+        "target": "portable",
+        "arch": ["x64"]
+      }
+    ]
+  },
+  "portable": {
+    "artifactName": "CustomerJourneyQuest-Admin-Portable.exe"
+  }
+}

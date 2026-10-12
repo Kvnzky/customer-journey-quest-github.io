@@ -1,0 +1,44 @@
+{
+  "name": "customer-journey-quest",
+  "private": true,
+  "version": "2.0.0",
+  "type": "module",
+  "main": "electron/main-game.cjs",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "preview": "vite preview",
+    "sync:server": "node server/sync-server.cjs",
+    "app:game": "electron electron/main-game.cjs",
+    "app:admin": "electron electron/main-admin.cjs",
+    "dist:game": "node scripts/package-standalone.cjs",
+    "dist:admin": "node scripts/package-standalone.cjs",
+    "package:standalone": "node scripts/package-standalone.cjs",
+    "build:all": "npm run build && node scripts/package-standalone.cjs"
+  },
+  "dependencies": {
+    "canvas-confetti": "^1.9.4",
+    "lucide-react": "^1.16.0",
+    "mammoth": "^1.13.0",
+    "pdfjs-dist": "^6.4.299",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "xlsx": "^0.18.5"
+  },
+  "devDependencies": {
+    "@types/canvas-confetti": "^1.9.0",
+    "@types/react": "^19.0.10",
+    "@types/react-dom": "^19.0.4",
+    "@vitejs/plugin-react": "^4.3.4",
+    "autoprefixer": "^10.4.20",
+    "concurrently": "^10.0.6",
+    "cross-env": "^10.1.0",
+    "electron": "^44.7.0",
+    "electron-builder": "^26.15.3",
+    "postcss": "^8.5.3",
+    "tailwindcss": "^3.4.17",
+    "typescript": "~5.7.2",
+    "vite": "^6.2.0",
+    "wait-on": "^9.5.1"
+  }
+}

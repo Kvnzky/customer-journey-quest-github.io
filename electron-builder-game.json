@@ -1,0 +1,32 @@
+{
+  "appId": "com.quest.customerjourney.game",
+  "productName": "Customer Journey Quest",
+  "copyright": "Copyright © 2026",
+  "directories": {
+    "output": "release/game"
+  },
+  "files": [
+    "dist/**/*",
+    "electron/main-game.cjs",
+    "electron/preload.cjs",
+    "package.json"
+  ],
+  "extraMetadata": {
+    "main": "electron/main-game.cjs"
+  },
+  "win": {
+    "target": [
+      {
+        "target": "dir",
+        "arch": ["x64"]
+      },
+      {
+        "target": "portable",
+        "arch": ["x64"]
+      }
+    ]
+  },
+  "portable": {
+    "artifactName": "CustomerJourneyQuest-Game-Portable.exe"
+  }
+}
