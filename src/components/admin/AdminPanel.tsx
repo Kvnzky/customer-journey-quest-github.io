@@ -27,7 +27,8 @@ import {
   RefreshCw,
   FolderOpen,
   FileSpreadsheet,
-  RotateCcw
+  RotateCcw,
+  Gamepad2
 } from 'lucide-react';
 import { Question, GameSession, GameSettings, AdminTab, SystemBackup, SyncStatus } from '../../types';
 import { dbManager } from '../../utils/db';
@@ -523,6 +524,15 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onLogout }) => {
             <UploadCloud className={`w-3.5 h-3.5 ${publishing ? 'animate-bounce' : ''}`} />
             <span>{publishing ? 'Publishing...' : 'Publish to Game Clients'}</span>
           </button>
+
+          <a
+            href="./"
+            className="py-2 px-3.5 rounded-xl bg-[#0e243a] hover:bg-[#16385b] border border-cyan-500/30 text-cyan-300 hover:text-white text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer"
+            title="Open the player Game interface"
+          >
+            <Gamepad2 className="w-3.5 h-3.5" />
+            <span>Open Game</span>
+          </a>
 
           <button
             onClick={() => {

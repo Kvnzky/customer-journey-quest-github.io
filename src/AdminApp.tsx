@@ -30,8 +30,10 @@ export function AdminApp() {
           <AdminLoginScreen
             onLoginSuccess={() => setIsAuthenticated(true)}
             onCancel={() => {
-              if (window.confirm('Do you want to close the administrator session?')) {
+              if (window.desktopAPI) {
                 window.close();
+              } else {
+                window.location.href = './';
               }
             }}
           />
