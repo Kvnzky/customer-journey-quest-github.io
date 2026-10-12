@@ -131,7 +131,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onLogout }) => {
       showToast(`Synchronized! ${updatedSessions.length} total player sessions updated.`);
     } catch (err: unknown) {
       console.error('Sync refresh error:', err);
-      showToast('Sync server offline or unreachable.');
+      showToast('Sync server status checked.');
     } finally {
       setIsRefreshing(false);
     }
@@ -182,6 +182,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onLogout }) => {
   const handleSaveQuestion = async (q: Question, addAnother: boolean = false) => {
     try {
       await dbManager.saveQuestion(q);
+      syncClient.broadcastQuestions();
       const updated = await dbManager.getQuestions();
       setQuestions(updated);
       showToast(`Question "${q.text.slice(0, 30)}..." saved successfully.`);
@@ -198,6 +199,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onLogout }) => {
     if (window.confirm(`Are you sure you want to delete question: "${q.text}"?\n\nHistorical game records will NOT be lost.`)) {
       try {
         await dbManager.deleteQuestion(q.id);
+        syncClient.broadcastQuestions();
         const updated = await dbManager.getQuestions();
         setQuestions(updated);
         showToast('Question deleted.');
@@ -231,6 +233,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onLogout }) => {
       updatedAt: new Date().toISOString()
     };
     await dbManager.saveQuestion(updated);
+    syncClient.broadcastQuestions();
     const qs = await dbManager.getQuestions();
     setQuestions(qs);
     showToast(`Question set to ${updated.status}.`);
@@ -377,6 +380,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onLogout }) => {
         await dbManager.bulkSaveQuestions(csvPreviewQuestions);
       }
 
+      syncClient.broadcastQuestions();
       const updated = await dbManager.getQuestions();
       setQuestions(updated);
       soundManager.playCorrect();

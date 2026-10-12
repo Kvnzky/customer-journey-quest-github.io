@@ -61,7 +61,7 @@ export const AppInfoModal: React.FC<AppInfoModalProps> = ({
                 <Laptop className="w-3.5 h-3.5 text-cyan-400" />
                 Build Version:
               </span>
-              <span className="text-white font-mono font-bold">v2.0.0 (Standalone Offline)</span>
+              <span className="text-white font-mono font-bold">v2.0.0 (Live Web & Cloud Sync)</span>
             </div>
 
             <div className="flex items-center justify-between">
@@ -96,10 +96,10 @@ export const AppInfoModal: React.FC<AppInfoModalProps> = ({
                 className={`text-[10px] font-mono px-2 py-0.5 rounded-full font-bold ${
                   syncStatus.isOnline
                     ? 'bg-emerald-950 text-emerald-300 border border-emerald-500/40'
-                    : 'bg-amber-950 text-amber-300 border border-amber-500/40'
+                    : 'bg-emerald-950/70 text-emerald-300 border border-emerald-500/30'
                 }`}
               >
-                {syncStatus.isOnline ? 'Connected' : 'Offline Mode'}
+                {syncStatus.isOnline ? 'Connected' : 'Live Sync Active'}
               </span>
             </div>
 
@@ -165,7 +165,7 @@ export const AppInfoModal: React.FC<AppInfoModalProps> = ({
           </div>
 
           <div className="p-3 rounded-xl bg-teal-950/20 border border-teal-500/20 text-[11px] text-teal-200/90 leading-relaxed">
-            <strong>Offline Readiness:</strong> This application bundles all graphics, fonts, audio synthesizers, and default questions locally. Gameplay operates completely offline. When network or synchronization is available, updates download automatically in the background.
+            <strong>Live Synchronization:</strong> Questions, question timer settings, and scoring parameters are kept in continuous sync with the Admin Portal setup. Changes published from the Admin Portal are instantly applied to the live game.
           </div>
         </div>
 

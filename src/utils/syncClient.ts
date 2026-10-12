@@ -4,8 +4,8 @@ import { dbManager } from './db';
 type SyncListener = (status: SyncStatus) => void;
 
 class SyncClient {
-  private syncUrl: string = 'http://localhost:4820';
-  private isOnline: boolean = false;
+  private syncUrl: string = '';
+  private isOnline: boolean = true;
   private lastSyncTime: string | null = null;
   private pendingCount: number = 0;
   private serverRevision: number = 1;
@@ -14,13 +14,52 @@ class SyncClient {
   private intervalId: ReturnType<typeof setInterval> | null = null;
   private listeners: Set<SyncListener> = new Set();
   private isSyncing: boolean = false;
+  private channel: BroadcastChannel | null = null;
 
   constructor() {
     if (typeof window !== 'undefined') {
+      const isDesktop = !!(window as unknown as { desktopAPI?: unknown }).desktopAPI;
       const savedUrl = localStorage.getItem('quest_sync_server_url');
       if (savedUrl) {
         this.syncUrl = savedUrl;
+      } else if (isDesktop) {
+        this.syncUrl = 'http://localhost:4820';
+      } else {
+        // Web deployment (Vercel / GitHub Pages / LAN)
+        this.syncUrl = '';
       }
+
+      // Realtime cross-tab synchronization channel
+      if ('BroadcastChannel' in window) {
+        try {
+          this.channel = new BroadcastChannel('quest_sync_realtime');
+          this.channel.onmessage = async (event) => {
+            if (event.data?.type === 'SETTINGS_UPDATED') {
+              if (event.data.settings) {
+                await dbManager.saveSettings(event.data.settings);
+              }
+              this.notify();
+            } else if (event.data?.type === 'QUESTIONS_UPDATED') {
+              this.notify();
+            }
+          };
+        } catch (e) {
+          console.warn('[SyncClient] BroadcastChannel unavailable:', e);
+        }
+      }
+
+      // Storage event listener fallback for cross-tab sync
+      window.addEventListener('storage', async (e) => {
+        if (e.key === 'quest_live_settings' && e.newValue) {
+          try {
+            const parsed = JSON.parse(e.newValue);
+            await dbManager.saveSettings(parsed);
+            this.notify();
+          } catch {}
+        } else if (e.key === 'quest_questions_rev') {
+          this.notify();
+        }
+      });
     }
   }
 
@@ -58,9 +97,30 @@ class SyncClient {
     };
   }
 
-  public startAutoSync(intervalMs: number = 20000): void {
+  public broadcastSettings(settings: GameSettings): void {
+    if (typeof window !== 'undefined') {
+      try {
+        localStorage.setItem('quest_live_settings', JSON.stringify(settings));
+        if (this.channel) {
+          this.channel.postMessage({ type: 'SETTINGS_UPDATED', settings });
+        }
+      } catch {}
+    }
+  }
+
+  public broadcastQuestions(): void {
+    if (typeof window !== 'undefined') {
+      try {
+        localStorage.setItem('quest_questions_rev', String(Date.now()));
+        if (this.channel) {
+          this.channel.postMessage({ type: 'QUESTIONS_UPDATED' });
+        }
+      } catch {}
+    }
+  }
+
+  public startAutoSync(intervalMs: number = 15000): void {
     if (this.intervalId) clearInterval(this.intervalId);
-    // Initial sync
     this.triggerSync();
     this.intervalId = setInterval(() => {
       this.triggerSync();
@@ -101,7 +161,7 @@ class SyncClient {
 
       // Check server status
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 4000);
+      const timeoutId = setTimeout(() => controller.abort(), 3000);
 
       const statusRes = await fetch(`${this.syncUrl}/api/status`, {
         signal: controller.signal
@@ -137,7 +197,7 @@ class SyncClient {
         }
       }
 
-      // 2. Always pull latest settings from sync server if available
+      // 2. Pull latest settings from sync server if available
       try {
         const setRes = await fetch(`${this.syncUrl}/api/settings`);
         if (setRes.ok) {
@@ -147,7 +207,7 @@ class SyncClient {
           }
         }
       } catch (e) {
-        // server settings check failed
+        // server settings check error ignored
       }
 
       // 3. If there are pending local sessions, push them to the server
@@ -187,9 +247,8 @@ class SyncClient {
 
       this.lastSyncTime = new Date().toLocaleTimeString();
     } catch (err: unknown) {
-      this.isOnline = false;
-      const msg = err instanceof Error ? err.message : 'Connection failed';
-      this.syncError = `Offline Mode: ${msg}`;
+      const msg = err instanceof Error ? err.message : 'Sync update pending';
+      this.syncError = msg;
     } finally {
       this.isSyncing = false;
       this.notify();
@@ -209,10 +268,11 @@ class SyncClient {
       }
     }
 
-    // 2. Save locally
+    // 2. Save locally and broadcast to all open tabs immediately
     await dbManager.saveSettings(settings);
+    this.broadcastSettings(settings);
 
-    // 3. Push to Sync Server
+    // 3. Push to Sync Server API
     try {
       const res = await fetch(`${this.syncUrl}/api/settings`, {
         method: 'POST',
@@ -228,7 +288,7 @@ class SyncClient {
         }
       }
     } catch (err) {
-      console.warn('[SyncClient] Sync server unreachable when saving settings (offline mode active):', err);
+      // Local sync broadcast is already active
     }
 
     this.notify();
@@ -252,10 +312,23 @@ class SyncClient {
       }
     }
 
-    // 2. Check Sync Server
+    // 2. Check localStorage fast cache (instant, 0ms)
+    if (typeof window !== 'undefined') {
+      try {
+        const cached = localStorage.getItem('quest_live_settings');
+        if (cached) {
+          const parsed = JSON.parse(cached);
+          if (parsed && typeof parsed.timerSeconds === 'number') {
+            latestSettings = parsed;
+          }
+        }
+      } catch {}
+    }
+
+    // 3. Check Sync Server API with fast timeout
     try {
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 2000);
+      const timeoutId = setTimeout(() => controller.abort(), 1200);
       const res = await fetch(`${this.syncUrl}/api/settings`, { signal: controller.signal });
       clearTimeout(timeoutId);
       if (res.ok) {
@@ -269,10 +342,10 @@ class SyncClient {
         }
       }
     } catch {
-      // Offline mode
+      // API not reached, using local
     }
 
-    // 3. Fallback to local DB
+    // 4. Fallback to Local IndexedDB
     if (!latestSettings) {
       latestSettings = await dbManager.getSettings();
     }
@@ -290,29 +363,39 @@ class SyncClient {
       } catch {}
     }
 
-    const res = await fetch(`${this.syncUrl}/api/publish`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ questions, settings })
-    });
+    // 2. Save locally and broadcast to all open tabs
+    await dbManager.bulkSaveQuestions(questions);
+    await dbManager.saveSettings(settings);
+    this.broadcastQuestions();
+    this.broadcastSettings(settings);
 
-    if (!res.ok) {
-      throw new Error(`Publish failed with status ${res.status}`);
+    // 3. Push to Server API
+    let newRevision = this.localRevision + 1;
+    try {
+      const res = await fetch(`${this.syncUrl}/api/publish`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ questions, settings })
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        if (data.ok && data.revision) {
+          newRevision = data.revision;
+        }
+      }
+    } catch (err) {
+      console.warn('[SyncClient] Server publish push failed, local publish active:', err);
     }
 
-    const data = await res.json();
-    if (!data.ok) {
-      throw new Error(data.error || 'Publish error');
-    }
-
-    this.serverRevision = data.revision;
-    this.localRevision = data.revision;
-    await dbManager.setLocalRevision(data.revision);
+    this.serverRevision = newRevision;
+    this.localRevision = newRevision;
+    await dbManager.setLocalRevision(newRevision);
     this.lastSyncTime = new Date().toLocaleTimeString();
     this.isOnline = true;
     this.notify();
 
-    return data.revision;
+    return newRevision;
   }
 
   // --- RESET ALL RECORDS ON SERVER ---

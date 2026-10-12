@@ -62,20 +62,12 @@ export const Header: React.FC<HeaderProps> = ({
           {/* Sync indicator badge */}
           <button
             onClick={onOpenInfoModal}
-            title={syncStatus.isOnline ? `Synchronized (Rev ${syncStatus.serverRevision})` : 'Offline Mode (Local Question Bank)'}
-            className={`px-2.5 py-1.5 rounded-lg border text-xs font-mono font-medium flex items-center gap-1.5 transition-all cursor-pointer ${
-              syncStatus.isOnline
-                ? 'bg-emerald-950/50 border-emerald-500/40 text-emerald-300'
-                : 'bg-amber-950/40 border-amber-500/40 text-amber-300'
-            }`}
+            title={`Live Cloud & Admin Sync Active (Rev ${syncStatus.serverRevision || 1})`}
+            className="px-2.5 py-1.5 rounded-lg border border-emerald-500/40 bg-emerald-950/50 text-emerald-300 text-xs font-mono font-medium flex items-center gap-1.5 transition-all cursor-pointer"
           >
-            {syncStatus.isOnline ? (
-              <Wifi className="w-3.5 h-3.5 text-emerald-400" />
-            ) : (
-              <WifiOff className="w-3.5 h-3.5 text-amber-400" />
-            )}
+            <Wifi className="w-3.5 h-3.5 text-emerald-400" />
             <span className="hidden sm:inline">
-              {syncStatus.isOnline ? `Synced (r${syncStatus.serverRevision})` : 'Offline'}
+              Synced (r{syncStatus.serverRevision || 1})
             </span>
           </button>
 

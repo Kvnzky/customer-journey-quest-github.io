@@ -192,7 +192,7 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
             </button>
           </div>
           <div className="text-[11px] font-mono text-slate-500">
-            Fair Competition Mode • 30s Countdown • Local Database
+            Fair Competition Mode • Live Sync Active
           </div>
         </div>
       </div>

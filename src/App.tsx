@@ -265,11 +265,6 @@ export function App() {
           onClose={() => setIsInfoModalOpen(false)}
         />
       )}
-
-      {/* Standalone Player Footer */}
-      <footer className="w-full py-4 px-6 border-t border-[#122842] text-center text-xs text-[#7ea0b7]/60 font-mono">
-        Customer Journey Quest • Standalone Game v2.0.0 • Offline Execution • Device: {deviceId.slice(0, 14)}
-      </footer>
     </div>
   );
 }
