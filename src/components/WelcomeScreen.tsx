@@ -177,23 +177,18 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
         </form>
 
         {/* Player Navigation Footer (Admin links completely removed!) */}
-        <div className="mt-6 pt-5 border-t border-[#163352] flex flex-wrap items-center justify-between gap-3 text-xs text-[#7ea0b7]">
-          <div className="flex items-center gap-4">
-            <button
-              onClick={() => {
-                soundManager.playClick();
-                onViewLeaderboard();
-              }}
-              type="button"
-              className="flex items-center gap-1.5 hover:text-white transition-colors cursor-pointer"
-            >
-              <Trophy className="w-3.5 h-3.5 text-amber-400" />
-              <span>Leaderboard & Records</span>
-            </button>
-          </div>
-          <div className="text-[11px] font-mono text-slate-500">
-            Fair Competition Mode • Live Sync Active
-          </div>
+        <div className="mt-6 pt-5 border-t border-[#163352] flex items-center justify-center text-xs text-[#7ea0b7]">
+          <button
+            onClick={() => {
+              soundManager.playClick();
+              onViewLeaderboard();
+            }}
+            type="button"
+            className="flex items-center gap-1.5 hover:text-white transition-colors cursor-pointer"
+          >
+            <Trophy className="w-3.5 h-3.5 text-amber-400" />
+            <span>Leaderboard & Records</span>
+          </button>
         </div>
       </div>
     </div>
