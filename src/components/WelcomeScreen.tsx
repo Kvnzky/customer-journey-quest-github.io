@@ -36,7 +36,7 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
     } else {
       setPersonalBest(null);
     }
-  }, [name]);
+  }, [name, syncStatus]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();

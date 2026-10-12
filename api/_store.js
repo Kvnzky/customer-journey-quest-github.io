@@ -17,19 +17,40 @@ const DEFAULT_STORE = {
     categories: ['Marketing', 'PreSales', 'Proposals', 'Guardian', 'Digital'],
     defaultPointsPerQuestion: 10
   },
-  sessions: []
+  sessions: [],
+  deletedSessionIds: [],
+  lastResetAt: 0
 };
+
+function normalizeStore(store) {
+  if (!Array.isArray(store.sessions)) store.sessions = [];
+  if (!Array.isArray(store.deletedSessionIds)) store.deletedSessionIds = [];
+  if (typeof store.lastResetAt !== 'number') store.lastResetAt = 0;
+
+  const deletedSet = new Set(store.deletedSessionIds);
+  store.sessions = store.sessions.filter(s => {
+    if (!s || !s.id) return false;
+    if (deletedSet.has(s.id)) return false;
+    if (store.lastResetAt > 0 && s.createdAt) {
+      const createdTs = new Date(s.createdAt).getTime();
+      if (!isNaN(createdTs) && createdTs < store.lastResetAt) return false;
+    }
+    return true;
+  });
+
+  return store;
+}
 
 export function getStore() {
   if (inMemoryStore) {
-    return inMemoryStore;
+    return normalizeStore(inMemoryStore);
   }
 
   // 1. Try reading /tmp/sync-data.json
   try {
     if (fs.existsSync('/tmp/sync-data.json')) {
       const raw = fs.readFileSync('/tmp/sync-data.json', 'utf8');
-      inMemoryStore = JSON.parse(raw);
+      inMemoryStore = normalizeStore(JSON.parse(raw));
       return inMemoryStore;
     }
   } catch {}
@@ -39,19 +60,19 @@ export function getStore() {
     const bundledPath = path.join(process.cwd(), 'server', 'data', 'sync-data.json');
     if (fs.existsSync(bundledPath)) {
       const raw = fs.readFileSync(bundledPath, 'utf8');
-      inMemoryStore = JSON.parse(raw);
+      inMemoryStore = normalizeStore(JSON.parse(raw));
       return inMemoryStore;
     }
   } catch {}
 
-  inMemoryStore = { ...DEFAULT_STORE };
+  inMemoryStore = normalizeStore({ ...DEFAULT_STORE });
   return inMemoryStore;
 }
 
 export function saveStore(store) {
-  inMemoryStore = store;
+  inMemoryStore = normalizeStore(store);
   try {
-    fs.writeFileSync('/tmp/sync-data.json', JSON.stringify(store, null, 2), 'utf8');
+    fs.writeFileSync('/tmp/sync-data.json', JSON.stringify(inMemoryStore, null, 2), 'utf8');
   } catch (err) {
     console.warn('[SyncAPI] Could not write to /tmp:', err);
   }

@@ -235,14 +235,77 @@ class DatabaseManager {
     });
   }
 
-  // --- SESSIONS ---
+  // --- SESSIONS & TOMBSTONE TRACKING ---
+  public getDeletedSessionIds(): string[] {
+    if (typeof window === 'undefined') return [];
+    try {
+      const raw = localStorage.getItem('quest_deleted_session_ids');
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed)) return parsed;
+      }
+    } catch {}
+    return [];
+  }
+
+  public addDeletedSessionIds(ids: string[]): void {
+    if (typeof window === 'undefined' || !Array.isArray(ids) || ids.length === 0) return;
+    try {
+      const current = new Set(this.getDeletedSessionIds());
+      ids.forEach(id => {
+        if (id) current.add(id);
+      });
+      localStorage.setItem('quest_deleted_session_ids', JSON.stringify(Array.from(current)));
+    } catch {}
+  }
+
+  public getLastResetTimestamp(): number {
+    if (typeof window === 'undefined') return 0;
+    try {
+      return Number(localStorage.getItem('quest_last_reset_ts') || '0') || 0;
+    } catch {
+      return 0;
+    }
+  }
+
+  public setLastResetTimestamp(ts: number): void {
+    if (typeof window === 'undefined') return;
+    try {
+      const current = this.getLastResetTimestamp();
+      if (ts > current) {
+        localStorage.setItem('quest_last_reset_ts', String(ts));
+      }
+    } catch {}
+  }
+
   public async getSessions(): Promise<GameSession[]> {
     const db = await this.getDB();
+    const deletedSet = new Set(this.getDeletedSessionIds());
+    const lastResetTs = this.getLastResetTimestamp();
+
     return new Promise((resolve, reject) => {
-      const tx = db.transaction('sessions', 'readonly');
+      const tx = db.transaction(['sessions', 'syncQueue'], 'readwrite');
       const store = tx.objectStore('sessions');
+      const queueStore = tx.objectStore('syncQueue');
       const req = store.getAll();
-      req.onsuccess = () => resolve(req.result || []);
+
+      req.onsuccess = () => {
+        const all = (req.result as GameSession[]) || [];
+        const valid: GameSession[] = [];
+
+        all.forEach(s => {
+          if (!s || !s.id) return;
+          const createdTs = s.createdAt ? new Date(s.createdAt).getTime() : 0;
+          if (deletedSet.has(s.id) || (lastResetTs > 0 && createdTs > 0 && createdTs < lastResetTs)) {
+            store.delete(s.id);
+            queueStore.delete(s.id);
+          } else {
+            valid.push(s);
+          }
+        });
+
+        resolve(valid);
+      };
       req.onerror = () => reject(req.error);
     });
   }
@@ -266,6 +329,7 @@ class DatabaseManager {
   }
 
   public async deleteSession(id: string): Promise<void> {
+    this.addDeletedSessionIds([id]);
     const db = await this.getDB();
     return new Promise((resolve, reject) => {
       const tx = db.transaction(['sessions', 'syncQueue'], 'readwrite');
@@ -276,39 +340,82 @@ class DatabaseManager {
     });
   }
 
-  public async clearAllSessions(): Promise<void> {
+  public async clearAllSessions(resetTimestamp?: number): Promise<void> {
+    const ts = resetTimestamp || Date.now();
+    this.setLastResetTimestamp(ts);
     const db = await this.getDB();
     return new Promise((resolve, reject) => {
       const tx = db.transaction(['sessions', 'syncQueue'], 'readwrite');
-      tx.objectStore('sessions').clear();
-      tx.objectStore('syncQueue').clear();
+      const sessionStore = tx.objectStore('sessions');
+      const getAllReq = sessionStore.getAll();
+      getAllReq.onsuccess = () => {
+        const existing = (getAllReq.result as GameSession[]) || [];
+        this.addDeletedSessionIds(existing.map(s => s.id));
+        sessionStore.clear();
+        tx.objectStore('syncQueue').clear();
+      };
       tx.oncomplete = () => resolve();
       tx.onerror = () => reject(tx.error);
     });
   }
 
-  public async mergeIncomingSessions(incomingSessions: GameSession[]): Promise<number> {
-    if (!Array.isArray(incomingSessions) || incomingSessions.length === 0) return 0;
+  public async mergeIncomingSessions(
+    incomingSessions: GameSession[],
+    serverDeletedIds?: string[],
+    serverLastResetTs?: number
+  ): Promise<number> {
+    if (Array.isArray(serverDeletedIds) && serverDeletedIds.length > 0) {
+      this.addDeletedSessionIds(serverDeletedIds);
+    }
+    if (typeof serverLastResetTs === 'number' && serverLastResetTs > 0) {
+      this.setLastResetTimestamp(serverLastResetTs);
+    }
+
+    const deletedSet = new Set(this.getDeletedSessionIds());
+    const lastResetTs = this.getLastResetTimestamp();
     const db = await this.getDB();
+
     return new Promise((resolve, reject) => {
-      const tx = db.transaction(['sessions'], 'readwrite');
+      const tx = db.transaction(['sessions', 'syncQueue'], 'readwrite');
       const store = tx.objectStore('sessions');
+      const queueStore = tx.objectStore('syncQueue');
       const getAllReq = store.getAll();
 
       getAllReq.onsuccess = () => {
         const existingSessions = (getAllReq.result as GameSession[]) || [];
-        const existingIds = new Set(existingSessions.map(s => s.id));
-        let addedCount = 0;
+        const existingIds = new Set<string>();
+        let changedCount = 0;
 
-        incomingSessions.forEach(sess => {
-          if (sess && sess.id && !existingIds.has(sess.id)) {
-            store.put({ ...sess, synced: true });
-            existingIds.add(sess.id);
-            addedCount++;
+        // 1. Purge any locally stored session that was deleted or predates a reset
+        existingSessions.forEach(s => {
+          if (!s || !s.id) return;
+          const createdTs = s.createdAt ? new Date(s.createdAt).getTime() : 0;
+          if (deletedSet.has(s.id) || (lastResetTs > 0 && createdTs > 0 && createdTs < lastResetTs)) {
+            store.delete(s.id);
+            queueStore.delete(s.id);
+            changedCount++;
+          } else {
+            existingIds.add(s.id);
           }
         });
 
-        resolve(addedCount);
+        // 2. Add valid incoming sessions that are not deleted and not predating reset
+        if (Array.isArray(incomingSessions)) {
+          incomingSessions.forEach(sess => {
+            if (!sess || !sess.id) return;
+            if (deletedSet.has(sess.id)) return;
+            const createdTs = sess.createdAt ? new Date(sess.createdAt).getTime() : 0;
+            if (lastResetTs > 0 && createdTs > 0 && createdTs < lastResetTs) return;
+
+            if (!existingIds.has(sess.id)) {
+              store.put({ ...sess, synced: true });
+              existingIds.add(sess.id);
+              changedCount++;
+            }
+          });
+        }
+
+        tx.oncomplete = () => resolve(changedCount);
       };
 
       getAllReq.onerror = () => reject(getAllReq.error);
@@ -318,11 +425,27 @@ class DatabaseManager {
   // --- SYNC QUEUE ---
   public async getQueuedSessions(): Promise<GameSession[]> {
     const db = await this.getDB();
+    const deletedSet = new Set(this.getDeletedSessionIds());
+    const lastResetTs = this.getLastResetTimestamp();
+
     return new Promise((resolve, reject) => {
-      const tx = db.transaction('syncQueue', 'readonly');
+      const tx = db.transaction('syncQueue', 'readwrite');
       const store = tx.objectStore('syncQueue');
       const req = store.getAll();
-      req.onsuccess = () => resolve(req.result || []);
+      req.onsuccess = () => {
+        const all = (req.result as GameSession[]) || [];
+        const valid: GameSession[] = [];
+        all.forEach(s => {
+          if (!s || !s.id) return;
+          const createdTs = s.createdAt ? new Date(s.createdAt).getTime() : 0;
+          if (deletedSet.has(s.id) || (lastResetTs > 0 && createdTs > 0 && createdTs < lastResetTs)) {
+            store.delete(s.id);
+          } else {
+            valid.push(s);
+          }
+        });
+        resolve(valid);
+      };
       req.onerror = () => reject(req.error);
     });
   }

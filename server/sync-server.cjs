@@ -171,37 +171,97 @@ const server = http.createServer((req, res) => {
     });
   } 
   else if (req.method === 'POST' && pathname === '/api/sessions') {
-    // Game client submitting completed sessions
     readBody((err, data) => {
       if (err) {
         return sendJson(400, { ok: false, error: 'Invalid JSON payload.' });
       }
 
-      const incoming = Array.isArray(data.sessions) ? data.sessions : (data.session ? [data.session] : []);
-      if (incoming.length === 0) {
-        return sendJson(200, { ok: true, savedCount: 0, message: 'No sessions provided.' });
+      if (!Array.isArray(syncStore.deletedSessionIds)) syncStore.deletedSessionIds = [];
+      if (typeof syncStore.lastResetAt !== 'number') syncStore.lastResetAt = 0;
+      const deletedSet = new Set(syncStore.deletedSessionIds);
+
+      if (data.action === 'delete') {
+        const ids = Array.isArray(data.sessionIds) ? data.sessionIds : (data.sessionId ? [data.sessionId] : []);
+        ids.forEach(id => { if (id) deletedSet.add(id); });
+        syncStore.deletedSessionIds = Array.from(deletedSet);
+        syncStore.sessions = (syncStore.sessions || []).filter(s => !deletedSet.has(s.id));
+        saveStore();
+        return sendJson(200, {
+          ok: true,
+          deletedSessionIds: syncStore.deletedSessionIds,
+          totalSessions: syncStore.sessions.length
+        });
       }
 
+      if (data.action === 'clear') {
+        (syncStore.sessions || []).forEach(s => { if (s && s.id) deletedSet.add(s.id); });
+        syncStore.deletedSessionIds = Array.from(deletedSet);
+        syncStore.lastResetAt = Math.max(syncStore.lastResetAt || 0, Number(data.timestamp) || Date.now());
+        syncStore.sessions = [];
+        saveStore();
+        return sendJson(200, {
+          ok: true,
+          deletedSessionIds: syncStore.deletedSessionIds,
+          lastResetAt: syncStore.lastResetAt,
+          totalSessions: 0
+        });
+      }
+
+      let modified = false;
+      if (Array.isArray(data.deletedSessionIds)) {
+        data.deletedSessionIds.forEach(id => {
+          if (id && !deletedSet.has(id)) {
+            deletedSet.add(id);
+            modified = true;
+          }
+        });
+        syncStore.deletedSessionIds = Array.from(deletedSet);
+      }
+
+      if (typeof data.lastResetAt === 'number' && data.lastResetAt > (syncStore.lastResetAt || 0)) {
+        syncStore.lastResetAt = data.lastResetAt;
+        modified = true;
+      }
+
+      if (modified) {
+        syncStore.sessions = (syncStore.sessions || []).filter(s => {
+          if (!s || !s.id || deletedSet.has(s.id)) return false;
+          if (syncStore.lastResetAt > 0 && s.createdAt) {
+            const ts = new Date(s.createdAt).getTime();
+            if (!isNaN(ts) && ts < syncStore.lastResetAt) return false;
+          }
+          return true;
+        });
+      }
+
+      const incoming = Array.isArray(data.sessions) ? data.sessions : (data.session ? [data.session] : []);
       let addedCount = 0;
       const existingIds = new Set(syncStore.sessions.map(s => s.id));
 
       incoming.forEach(sess => {
-        if (sess && sess.id && !existingIds.has(sess.id)) {
+        if (!sess || !sess.id || deletedSet.has(sess.id)) return;
+        if (syncStore.lastResetAt > 0 && sess.createdAt) {
+          const ts = new Date(sess.createdAt).getTime();
+          if (!isNaN(ts) && ts < syncStore.lastResetAt) return;
+        }
+        if (!existingIds.has(sess.id)) {
           syncStore.sessions.push(sess);
           existingIds.add(sess.id);
           addedCount++;
         }
       });
 
-      if (addedCount > 0) {
+      if (addedCount > 0 || modified) {
         saveStore();
-        console.log(`[SyncServer] Saved ${addedCount} new sessions (Total: ${syncStore.sessions.length}).`);
       }
 
       sendJson(200, {
         ok: true,
         savedCount: addedCount,
-        totalSessions: syncStore.sessions.length
+        totalSessions: syncStore.sessions.length,
+        sessions: syncStore.sessions,
+        deletedSessionIds: syncStore.deletedSessionIds,
+        lastResetAt: syncStore.lastResetAt
       });
     });
   } 
@@ -229,7 +289,9 @@ const server = http.createServer((req, res) => {
   else if (req.method === 'GET' && pathname === '/api/records') {
     sendJson(200, {
       ok: true,
-      sessions: syncStore.sessions
+      sessions: syncStore.sessions || [],
+      deletedSessionIds: syncStore.deletedSessionIds || [],
+      lastResetAt: syncStore.lastResetAt || 0
     });
   } 
   else if (req.method === 'GET' && pathname === '/api/settings') {

@@ -41,6 +41,16 @@ class SyncClient {
               this.notify();
             } else if (event.data?.type === 'QUESTIONS_UPDATED') {
               this.notify();
+            } else if (event.data?.type === 'SESSION_DELETED') {
+              if (event.data.sessionId) {
+                await dbManager.deleteSession(event.data.sessionId);
+              }
+              this.notify();
+            } else if (event.data?.type === 'SESSIONS_CLEARED') {
+              await dbManager.clearAllSessions(event.data.timestamp);
+              this.notify();
+            } else if (event.data?.type === 'SESSIONS_UPDATED') {
+              this.notify();
             }
           };
         } catch (e) {
@@ -58,6 +68,16 @@ class SyncClient {
           } catch {}
         } else if (e.key === 'quest_questions_rev') {
           this.notify();
+        } else if (e.key === 'quest_sessions_sync' && e.newValue) {
+          try {
+            const parsed = JSON.parse(e.newValue);
+            if (parsed?.type === 'SESSION_DELETED' && parsed.sessionId) {
+              await dbManager.deleteSession(parsed.sessionId);
+            } else if (parsed?.type === 'SESSIONS_CLEARED') {
+              await dbManager.clearAllSessions(parsed.timestamp);
+            }
+            this.notify();
+          } catch {}
         }
       });
     }
@@ -210,32 +230,54 @@ class SyncClient {
         // server settings check error ignored
       }
 
-      // 3. If there are pending local sessions, push them to the server
-      if (queued.length > 0) {
-        console.log(`[SyncClient] Uploading ${queued.length} queued sessions to sync server...`);
+      // 3. Push pending local sessions and/or local tombstones to the server
+      const deletedSessionIds = dbManager.getDeletedSessionIds();
+      const lastResetAt = dbManager.getLastResetTimestamp();
+
+      if (queued.length > 0 || deletedSessionIds.length > 0 || lastResetAt > 0) {
+        if (queued.length > 0) {
+          console.log(`[SyncClient] Uploading ${queued.length} queued sessions to sync server...`);
+        }
         const pushRes = await fetch(`${this.syncUrl}/api/sessions`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ sessions: queued })
+          body: JSON.stringify({
+            sessions: queued,
+            deletedSessionIds,
+            lastResetAt
+          })
         });
 
         if (pushRes.ok) {
           const pushData = await pushRes.json();
           if (pushData.ok) {
-            await dbManager.markSessionsSynced(queued.map(s => s.id));
-            this.pendingCount = 0;
-            console.log(`[SyncClient] Queued sessions successfully synchronized.`);
+            if (queued.length > 0) {
+              await dbManager.markSessionsSynced(queued.map(s => s.id));
+              this.pendingCount = 0;
+              console.log(`[SyncClient] Queued sessions successfully synchronized.`);
+            }
+            if (Array.isArray(pushData.sessions)) {
+              await dbManager.mergeIncomingSessions(
+                pushData.sessions,
+                pushData.deletedSessionIds,
+                pushData.lastResetAt
+              );
+            }
           }
         }
       }
 
-      // 4. PULL all sessions from the sync server and merge into local IndexedDB
+      // 4. PULL all sessions and tombstones from the sync server and merge into local IndexedDB
       try {
         const recordsRes = await fetch(`${this.syncUrl}/api/records`);
         if (recordsRes.ok) {
           const recordsData = await recordsRes.json();
           if (recordsData.ok && Array.isArray(recordsData.sessions)) {
-            const added = await dbManager.mergeIncomingSessions(recordsData.sessions);
+            const added = await dbManager.mergeIncomingSessions(
+              recordsData.sessions,
+              recordsData.deletedSessionIds,
+              recordsData.lastResetAt
+            );
             if (added > 0) {
               console.log(`[SyncClient] Downloaded and merged ${added} sessions from sync server.`);
             }
@@ -398,15 +440,71 @@ class SyncClient {
     return newRevision;
   }
 
-  // --- RESET ALL RECORDS ON SERVER ---
-  public async resetServerRecords(): Promise<boolean> {
+  // --- DELETE SINGLE SESSION ON LOCAL DB + SERVER + BROADCAST TO TABS ---
+  public async deleteSession(sessionId: string): Promise<boolean> {
+    await dbManager.deleteSession(sessionId);
+
+    if (typeof window !== 'undefined') {
+      try {
+        const payload = { type: 'SESSION_DELETED', sessionId, timestamp: Date.now() };
+        localStorage.setItem('quest_sessions_sync', JSON.stringify(payload));
+        if (this.channel) {
+          this.channel.postMessage(payload);
+        }
+      } catch {}
+    }
+
     try {
-      const res = await fetch(`${this.syncUrl}/api/reset-records`, {
+      await fetch(`${this.syncUrl}/api/sessions`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' }
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'delete',
+          sessionId,
+          deletedSessionIds: dbManager.getDeletedSessionIds()
+        })
       });
-      return res.ok;
+    } catch (err) {
+      console.warn('[SyncClient] Server session delete deferred to next sync:', err);
+    }
+
+    this.notify();
+    return true;
+  }
+
+  // --- RESET ALL RECORDS ON LOCAL DB + SERVER + BROADCAST TO TABS ---
+  public async resetServerRecords(): Promise<boolean> {
+    const timestamp = Date.now();
+    await dbManager.clearAllSessions(timestamp);
+
+    if (typeof window !== 'undefined') {
+      try {
+        const payload = { type: 'SESSIONS_CLEARED', timestamp };
+        localStorage.setItem('quest_sessions_sync', JSON.stringify(payload));
+        if (this.channel) {
+          this.channel.postMessage(payload);
+        }
+      } catch {}
+    }
+
+    try {
+      const deletedSessionIds = dbManager.getDeletedSessionIds();
+      await Promise.allSettled([
+        fetch(`${this.syncUrl}/api/sessions`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'clear', timestamp, deletedSessionIds })
+        }),
+        fetch(`${this.syncUrl}/api/reset-records`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ timestamp, deletedSessionIds })
+        })
+      ]);
+      this.notify();
+      return true;
     } catch {
+      this.notify();
       return false;
     }
   }

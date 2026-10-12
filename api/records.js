@@ -12,6 +12,8 @@ export default function handler(req, res) {
   const store = getStore();
   return res.status(200).json({
     ok: true,
-    sessions: store.sessions || []
+    sessions: store.sessions || [],
+    deletedSessionIds: store.deletedSessionIds || [],
+    lastResetAt: store.lastResetAt || 0
   });
 }

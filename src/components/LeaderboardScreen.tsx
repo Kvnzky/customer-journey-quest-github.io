@@ -44,14 +44,18 @@ export const LeaderboardScreen: React.FC<LeaderboardScreenProps> = ({
   const [totalGames, setTotalGames] = useState(0);
 
   useEffect(() => {
+    loadLeaderboardData(true);
     syncClient.triggerSync().then(() => {
-      loadLeaderboardData();
+      loadLeaderboardData(false);
     }).catch(() => {});
-    loadLeaderboardData();
+    const unsub = syncClient.subscribe(() => {
+      loadLeaderboardData(false);
+    });
+    return () => unsub();
   }, [activeTab]);
 
-  const loadLeaderboardData = async () => {
-    setLoading(true);
+  const loadLeaderboardData = async (showSpinner: boolean = false) => {
+    if (showSpinner) setLoading(true);
     try {
       const data = await dbManager.getLeaderboard(activeTab, searchTerm);
       setEntries(data);
@@ -65,7 +69,7 @@ export const LeaderboardScreen: React.FC<LeaderboardScreenProps> = ({
     } catch (err) {
       console.error('Error loading leaderboard:', err);
     } finally {
-      setLoading(false);
+      if (showSpinner) setLoading(false);
     }
   };
 
@@ -121,10 +125,11 @@ export const LeaderboardScreen: React.FC<LeaderboardScreenProps> = ({
           <button
             onClick={async () => {
               soundManager.playClick();
+              setLoading(true);
               try {
                 await syncClient.triggerSync();
               } catch {}
-              await loadLeaderboardData();
+              await loadLeaderboardData(true);
               soundManager.playCorrect();
             }}
             className="py-2.5 px-4 rounded-xl bg-[#0c243a] hover:bg-[#122e4d] border border-cyan-500/50 text-cyan-300 hover:text-white text-xs sm:text-sm font-semibold flex items-center gap-2 transition-all cursor-pointer"

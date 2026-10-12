@@ -111,7 +111,10 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onLogout }) => {
 
   useEffect(() => {
     loadAllData();
-    const unsub = syncClient.subscribe(st => setSyncStatus(st));
+    const unsub = syncClient.subscribe(st => {
+      setSyncStatus(st);
+      dbManager.getSessions().then(setSessions).catch(() => {});
+    });
     syncClient.triggerSync().then(() => {
       loadAllData();
     }).catch(() => {});
@@ -263,10 +266,11 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onLogout }) => {
   const handleDeleteSession = async (sess: GameSession) => {
     if (window.confirm(`Are you sure you want to permanently delete session "${sess.id}" for player "${sess.playerName}"?`)) {
       try {
-        await dbManager.deleteSession(sess.id);
+        await syncClient.deleteSession(sess.id);
         const updated = await dbManager.getSessions();
         setSessions(updated);
-        showToast('Session record deleted.');
+        soundManager.playCorrect();
+        showToast(`Deleted record for "${sess.playerName}" and synced with main site.`);
       } catch (err) {
         showToast('Failed to delete session record.');
       }
