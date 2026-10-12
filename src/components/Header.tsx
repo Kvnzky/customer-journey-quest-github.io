@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Volume2, VolumeX, Trophy, Home, Info, Wifi, WifiOff } from 'lucide-react';
+import { Volume2, VolumeX, Trophy, Home, Info } from 'lucide-react';
 import { soundManager } from '../utils/audio';
 import { ScreenState, SyncStatus } from '../types';
 
@@ -59,17 +59,6 @@ export const Header: React.FC<HeaderProps> = ({
             </div>
           )}
 
-          {/* Sync indicator badge */}
-          <button
-            onClick={onOpenInfoModal}
-            title={`Live Cloud & Admin Sync Active (Rev ${syncStatus.serverRevision || 1})`}
-            className="px-2.5 py-1.5 rounded-lg border border-emerald-500/40 bg-emerald-950/50 text-emerald-300 text-xs font-mono font-medium flex items-center gap-1.5 transition-all cursor-pointer"
-          >
-            <Wifi className="w-3.5 h-3.5 text-emerald-400" />
-            <span className="hidden sm:inline">
-              Synced (r{syncStatus.serverRevision || 1})
-            </span>
-          </button>
 
           {currentScreen !== 'welcome' && (
             <button

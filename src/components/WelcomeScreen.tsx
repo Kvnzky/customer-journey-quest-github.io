@@ -66,26 +66,9 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
 
         {/* Card Header matching screenshot */}
         <div className="relative z-10 mb-6">
-          <div className="text-[11px] sm:text-xs font-bold tracking-widest text-[#38efbf] uppercase font-mono mb-2 flex items-center justify-between">
-            <span className="flex items-center gap-2">
-              <Sparkles className="w-3.5 h-3.5 text-[#38efbf]" />
-              YOUR MISSION STARTS HERE
-            </span>
-
-            {/* Offline / Sync State indicator */}
-            <span className="flex items-center gap-1.5 text-[10px] text-slate-400 font-mono">
-              {syncStatus.isOnline ? (
-                <>
-                  <span className="w-2 h-2 rounded-full bg-emerald-400"></span>
-                  <span className="text-emerald-300">Synchronized (r{syncStatus.serverRevision})</span>
-                </>
-              ) : (
-                <>
-                  <span className="w-2 h-2 rounded-full bg-amber-400"></span>
-                  <span className="text-amber-300">Offline Mode (Local Cache)</span>
-                </>
-              )}
-            </span>
+          <div className="text-[11px] sm:text-xs font-bold tracking-widest text-[#38efbf] uppercase font-mono mb-2 flex items-center gap-2">
+            <Sparkles className="w-3.5 h-3.5 text-[#38efbf]" />
+            <span>YOUR MISSION STARTS HERE</span>
           </div>
 
           <h2 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-white tracking-tight leading-snug">
