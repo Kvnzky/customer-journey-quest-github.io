@@ -79,7 +79,7 @@ export const AdminLoginScreen: React.FC<AdminLoginScreenProps> = ({
                   setPin(e.target.value);
                   if (error) setError(null);
                 }}
-                placeholder="Enter admin password (default: admin123)"
+                placeholder="Enter admin password"
                 autoFocus
                 className="w-full px-4 py-3 rounded-xl bg-[#081525] border border-[#1b3e64] text-white placeholder-slate-500 focus:outline-none focus:border-[#38efbf] focus:ring-1 focus:ring-[#38efbf] text-sm"
               />
@@ -113,12 +113,6 @@ export const AdminLoginScreen: React.FC<AdminLoginScreenProps> = ({
             <span>Return to Game</span>
           </button>
         </form>
-
-        <div className="mt-6 pt-4 border-t border-[#142d4a] text-center">
-          <p className="text-[11px] text-slate-500 leading-normal">
-            Initial default credential: <code className="text-[#38efbf] font-mono">admin123</code>. You can change this PIN inside Admin Settings.
-          </p>
-        </div>
       </div>
     </div>
   );
