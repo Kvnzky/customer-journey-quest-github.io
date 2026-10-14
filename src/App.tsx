@@ -258,7 +258,6 @@ export function App() {
         {currentScreen === 'leaderboard' && (
           <LeaderboardScreen
             onBack={() => setCurrentScreen('welcome')}
-            activePlayerName={playerName}
             latestSessionId={latestSession?.id}
           />
         )}

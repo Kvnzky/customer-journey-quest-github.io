@@ -11,7 +11,8 @@ import {
   Sparkles,
   RefreshCw,
   Crown,
-  Medal
+  Medal,
+  X
 } from 'lucide-react';
 import { LeaderboardItem } from '../types';
 import { dbManager } from '../utils/db';
@@ -21,19 +22,17 @@ import { soundManager } from '../utils/audio';
 
 interface LeaderboardScreenProps {
   onBack: () => void;
-  activePlayerName?: string;
   latestSessionId?: string;
 }
 
 export const LeaderboardScreen: React.FC<LeaderboardScreenProps> = ({
   onBack,
-  activePlayerName,
   latestSessionId
 }) => {
   const [activeTab, setActiveTab] = useState<'overall' | 'today' | 'personal_bests' | 'player_history'>('overall');
   const [entries, setEntries] = useState<LeaderboardItem[]>([]);
   const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState(activePlayerName || '');
+  const [searchTerm, setSearchTerm] = useState('');
   const [isLiveSynced, setIsLiveSynced] = useState<boolean>(true);
 
   // High-level statistics
@@ -264,8 +263,18 @@ export const LeaderboardScreen: React.FC<LeaderboardScreenProps> = ({
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               placeholder="Search player name..."
-              className="w-full pl-9 pr-3 py-2 rounded-lg bg-[#081525] border border-[#1a3a5f] text-xs sm:text-sm text-white placeholder-slate-500 focus:outline-none focus:border-[#38efbf]"
+              className="w-full pl-9 pr-8 py-2 rounded-lg bg-[#081525] border border-[#1a3a5f] text-xs sm:text-sm text-white placeholder-slate-500 focus:outline-none focus:border-[#38efbf]"
             />
+            {searchTerm && (
+              <button
+                type="button"
+                onClick={() => setSearchTerm('')}
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white p-0.5 rounded cursor-pointer transition-colors"
+                title="Clear search"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            )}
           </div>
         </div>
 
