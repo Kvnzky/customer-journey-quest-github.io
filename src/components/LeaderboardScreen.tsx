@@ -34,6 +34,7 @@ export const LeaderboardScreen: React.FC<LeaderboardScreenProps> = ({
   const [entries, setEntries] = useState<LeaderboardItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState(activePlayerName || '');
+  const [isLiveSynced, setIsLiveSynced] = useState<boolean>(true);
 
   // High-level statistics
   const [totalPlayers, setTotalPlayers] = useState(0);
@@ -42,14 +43,12 @@ export const LeaderboardScreen: React.FC<LeaderboardScreenProps> = ({
   const loadLeaderboardData = useCallback(async (showSpinner: boolean = false) => {
     if (showSpinner) setLoading(true);
     try {
-      const data = await dbManager.getLeaderboard(activeTab, searchTerm);
+      const data = await syncClient.fetchLeaderboard(activeTab, searchTerm);
       setEntries(data);
 
-      // Compute summary stats
       const allSessions = await dbManager.getSessions();
-      setTotalGames(allSessions.length);
-
-      const uniquePlayersSet = new Set(allSessions.map(s => s.normalizedPlayerName));
+      setTotalGames(Math.max(data.length, allSessions.length));
+      const uniquePlayersSet = new Set([...data.map(s => s.normalizedPlayerName || s.playerName), ...allSessions.map(s => s.normalizedPlayerName)]);
       setTotalPlayers(uniquePlayersSet.size);
     } catch (err) {
       console.error('Error loading leaderboard:', err);
@@ -58,20 +57,23 @@ export const LeaderboardScreen: React.FC<LeaderboardScreenProps> = ({
     }
   }, [activeTab, searchTerm]);
 
+  // Real-time automatic synchronization stream (1-2s latency)
   useEffect(() => {
-    loadLeaderboardData(true);
-    syncClient.triggerSync().then(() => {
-      loadLeaderboardData(false);
-    }).catch(() => {});
-  }, [activeTab]);
+    setLoading(true);
+    const stopStream = syncClient.startLeaderboardStream(activeTab, (items, isOnline) => {
+      setEntries(items);
+      setIsLiveSynced(isOnline);
+      setLoading(false);
 
-  useEffect(() => {
-    loadLeaderboardData(false);
-    const unsub = syncClient.subscribe(() => {
-      loadLeaderboardData(false);
-    });
-    return () => unsub();
-  }, [loadLeaderboardData]);
+      const uniquePlayersSet = new Set(items.map(s => s.normalizedPlayerName || s.playerName));
+      setTotalPlayers(uniquePlayersSet.size);
+      setTotalGames(items.length);
+    }, 2000);
+
+    return () => {
+      stopStream();
+    };
+  }, [activeTab]);
 
   const handleExportCsv = () => {
     soundManager.playClick();
@@ -122,6 +124,21 @@ export const LeaderboardScreen: React.FC<LeaderboardScreenProps> = ({
         </div>
 
         <div className="flex items-center gap-2.5 self-start sm:self-auto">
+          {/* Subtle Live Synchronization Status Badge */}
+          <div className="hidden sm:flex items-center gap-1.5 px-3 py-2 rounded-xl bg-[#0c1f35] border border-[#1b3d63] text-xs font-mono">
+            {isLiveSynced ? (
+              <>
+                <span className="w-2 h-2 rounded-full bg-[#38efbf] animate-pulse" />
+                <span className="text-teal-300 font-semibold">Live Rankings</span>
+              </>
+            ) : (
+              <>
+                <span className="w-2 h-2 rounded-full bg-amber-400 animate-ping" />
+                <span className="text-amber-300 font-semibold">Reconnecting...</span>
+              </>
+            )}
+          </div>
+
           <button
             onClick={async () => {
               soundManager.playClick();

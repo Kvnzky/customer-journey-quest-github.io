@@ -1,32 +1,31 @@
-import { getStore, rankSessions } from './_store.js';
+import { getStore, getAuthoritativeLeaderboard } from './_store.js';
 
-export default function handler(req, res) {
+export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
 
   if (req.method === 'OPTIONS') {
     return res.status(204).end();
   }
 
-  const store = getStore();
-  const view = req.query?.view || 'overall';
-  const ranked = rankSessions(store.sessions || []);
+  const view = (req.query?.view || 'overall').toLowerCase();
+  const search = req.query?.search || req.query?.player || '';
 
-  if (view === 'today') {
-    const todayStr = new Date().toDateString();
-    const filtered = ranked.filter(s => new Date(s.createdAt).toDateString() === todayStr);
-    return res.status(200).json({ ok: true, leaderboard: filtered });
-  } else if (view === 'personal_bests') {
-    const bestMap = new Map();
-    ranked.forEach(s => {
-      const key = s.normalizedPlayerName || (s.playerName || '').trim().toLowerCase();
-      if (!bestMap.has(key)) {
-        bestMap.set(key, s);
-      }
-    });
-    return res.status(200).json({ ok: true, leaderboard: rankSessions(Array.from(bestMap.values())) });
-  }
+  const leaderboard = await getAuthoritativeLeaderboard(view, search);
+  const store = await getStore();
 
-  return res.status(200).json({ ok: true, leaderboard: ranked });
+  const totalSessions = (store.sessions || []).length;
+  const uniquePlayers = new Set((store.sessions || []).map(s => s.normalizedPlayerName || s.playerName)).size;
+
+  return res.status(200).json({
+    ok: true,
+    view,
+    totalSessions,
+    totalPlayers: uniquePlayers,
+    revision: store.revision || 1,
+    leaderboard,
+    timestamp: new Date().toISOString()
+  });
 }

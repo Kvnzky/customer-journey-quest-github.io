@@ -135,8 +135,17 @@ export function App() {
       await dbManager.saveSession(evaluatedSession);
       setLatestSession(evaluatedSession);
 
-      // Trigger immediate background sync push if online
-      syncClient.triggerSync().catch(() => {});
+      // Submit immediately to central server database and confirm persistence!
+      try {
+        const syncResult = await syncClient.submitSession(evaluatedSession);
+        if (syncResult && syncResult.ok) {
+          evaluatedSession.synced = true;
+          await dbManager.markSessionsSynced([evaluatedSession.id]);
+          setLatestSession({ ...evaluatedSession, synced: true });
+        }
+      } catch (syncErr) {
+        console.warn('Direct score submission queued for background retry:', syncErr);
+      }
 
       if (reason === 'COMPLETED') {
         soundManager.playVictory();

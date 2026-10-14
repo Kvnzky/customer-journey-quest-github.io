@@ -38,44 +38,63 @@ export const ResultsScreen: React.FC<ResultsScreenProps> = ({
   const [isPersonalBest, setIsPersonalBest] = useState<boolean>(false);
   const [showReview, setShowReview] = useState<boolean>(true);
 
+  const [isSynced, setIsSynced] = useState<boolean>(session.synced ?? true);
+  const [retrying, setRetrying] = useState<boolean>(false);
+
   useEffect(() => {
     let confettiFired = false;
 
-    const fetchRankingInfo = async () => {
-      try {
-        const isPB = await dbManager.checkIsPersonalBest(
-          session.normalizedPlayerName,
-          session.score,
-          session.id
-        );
-        setIsPersonalBest(isPB);
-
-        const allRanked = await dbManager.getLeaderboard('overall');
-        const match = allRanked.find(item => item.id === session.id);
-        if (match) {
-          setLeaderboardRank(match.rank);
-          setIsSharedRank(!!match.isSharedRank);
-        }
-
-        if (!confettiFired && (session.status === 'completed' || isPB)) {
-          confettiFired = true;
-          confetti({
-            particleCount: 80,
-            spread: 70,
-            origin: { y: 0.6 }
-          });
-        }
-      } catch (err) {
-        console.error('Error fetching ranking info:', err);
+    dbManager.checkIsPersonalBest(
+      session.normalizedPlayerName,
+      session.score,
+      session.id
+    ).then(isPB => {
+      setIsPersonalBest(isPB);
+      if (!confettiFired && (session.status === 'completed' || isPB)) {
+        confettiFired = true;
+        confetti({
+          particleCount: 80,
+          spread: 70,
+          origin: { y: 0.6 }
+        });
       }
-    };
+    }).catch(() => {});
 
-    fetchRankingInfo();
-    const unsub = syncClient.subscribe(() => {
-      fetchRankingInfo();
-    });
-    return () => unsub();
+    // Live stream rank updates from central database
+    const stopStream = syncClient.startLeaderboardStream('overall', (items, isOnline) => {
+      const match = items.find(item => item.id === session.id);
+      if (match) {
+        setLeaderboardRank(match.rank);
+        setIsSharedRank(!!match.isSharedRank);
+        setIsSynced(true);
+      } else if (isOnline && session.synced) {
+        setIsSynced(true);
+      }
+    }, 2500);
+
+    return () => {
+      stopStream();
+    };
   }, [session]);
+
+  const handleManualRetrySync = async () => {
+    setRetrying(true);
+    try {
+      const res = await syncClient.submitSession(session);
+      if (res && res.ok) {
+        setIsSynced(true);
+        if (res.rank) {
+          setLeaderboardRank(res.rank);
+          setIsSharedRank(!!res.isSharedRank);
+        }
+        soundManager.playCorrect();
+      }
+    } catch {
+      soundManager.playIncorrect();
+    } finally {
+      setRetrying(false);
+    }
+  };
 
   const formatDuration = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
@@ -124,6 +143,23 @@ export const ResultsScreen: React.FC<ResultsScreenProps> = ({
           </div>
         </div>
       </div>
+
+      {/* Offline sync status and retry banner if needed */}
+      {!isSynced && (
+        <div className="mb-4 p-3 rounded-xl bg-amber-950/40 border border-amber-500/40 text-amber-300 text-xs flex items-center justify-between gap-3">
+          <div className="flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-amber-400 animate-ping" />
+            <span>Score saved locally. Reconnecting to sync with central leaderboard...</span>
+          </div>
+          <button
+            onClick={handleManualRetrySync}
+            disabled={retrying}
+            className="px-3 py-1 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 text-amber-200 border border-amber-500/40 font-semibold cursor-pointer disabled:opacity-50"
+          >
+            {retrying ? 'Syncing...' : 'Sync Now'}
+          </button>
+        </div>
+      )}
 
       {/* Summary KPI Cards Grid: Rank on Board, Total Score in Middle, Completion Time */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 mb-6">

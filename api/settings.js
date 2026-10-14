@@ -1,6 +1,6 @@
 import { getStore, saveStore } from './_store.js';
 
-export default function handler(req, res) {
+export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
@@ -9,7 +9,7 @@ export default function handler(req, res) {
     return res.status(204).end();
   }
 
-  const store = getStore();
+  const store = await getStore();
 
   if (req.method === 'POST') {
     const body = req.body || {};
@@ -19,7 +19,7 @@ export default function handler(req, res) {
     store.settings = { ...store.settings, ...body.settings };
     store.revision = (store.revision || 0) + 1;
     store.lastPublished = new Date().toISOString();
-    saveStore(store);
+    await saveStore(store);
 
     return res.status(200).json({
       ok: true,

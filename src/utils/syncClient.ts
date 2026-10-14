@@ -449,8 +449,141 @@ class SyncClient {
     return newRevision;
   }
 
+  // --- IMMEDIATE SCORE SUBMISSION TO CENTRAL DATABASE ---
+  public async submitSession(session: any): Promise<{ ok: boolean; session?: any; rank?: number; isSharedRank?: boolean; error?: string }> {
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 6000);
+
+      const res = await fetch(`${this.syncUrl}/api/sessions`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ session }),
+        signal: controller.signal
+      });
+      clearTimeout(timeoutId);
+
+      if (res.ok) {
+        const data = await res.json();
+        if (data.ok) {
+          this.isOnline = true;
+          this.syncError = null;
+          this.lastSyncTime = new Date().toLocaleTimeString();
+          await dbManager.markSessionsSynced([session.id]);
+
+          // Broadcast to other open tabs
+          if (typeof window !== 'undefined') {
+            try {
+              const payload = { type: 'SESSIONS_UPDATED', timestamp: Date.now() };
+              localStorage.setItem('quest_sessions_sync', JSON.stringify(payload));
+              if (this.channel) {
+                this.channel.postMessage(payload);
+              }
+            } catch {}
+          }
+          this.notify();
+          return {
+            ok: true,
+            session: data.session || session,
+            rank: data.rank,
+            isSharedRank: data.isSharedRank
+          };
+        }
+      }
+      throw new Error(`Server returned HTTP ${res.status}`);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Submission failed';
+      this.syncError = msg;
+      this.isOnline = false;
+      this.notify();
+      return { ok: false, error: msg };
+    }
+  }
+
+  // --- AUTHORITATIVE LEADERBOARD RETRIEVAL ---
+  public async fetchLeaderboard(view: string = 'overall', search: string = ''): Promise<any[]> {
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 3500);
+
+      const queryParams = new URLSearchParams();
+      queryParams.set('view', view);
+      if (search && search.trim()) {
+        queryParams.set('search', search.trim());
+      }
+
+      const res = await fetch(`${this.syncUrl}/api/leaderboard?${queryParams.toString()}`, {
+        headers: { 'Cache-Control': 'no-cache' },
+        signal: controller.signal
+      });
+      clearTimeout(timeoutId);
+
+      if (res.ok) {
+        const data = await res.json();
+        if (data.ok && Array.isArray(data.leaderboard)) {
+          this.isOnline = true;
+          this.syncError = null;
+          // Asynchronously update local IndexedDB cache with latest server records
+          if (data.leaderboard.length > 0) {
+            dbManager.mergeIncomingSessions(data.leaderboard).catch(() => {});
+          }
+          return data.leaderboard;
+        }
+      }
+    } catch (err) {
+      this.isOnline = false;
+      this.syncError = err instanceof Error ? err.message : 'Leaderboard fetch offline';
+    }
+
+    // Fallback to local IndexedDB if offline or API unreachable
+    return dbManager.getLeaderboard(view as any, search);
+  }
+
+  // --- AUTOMATIC REAL-TIME LEADERBOARD STREAM (1-2s LATENCY) ---
+  public startLeaderboardStream(
+    view: string,
+    callback: (items: any[], isOnline: boolean) => void,
+    intervalMs: number = 2000
+  ): () => void {
+    let isActive = true;
+
+    const pullAndNotify = async () => {
+      if (!isActive) return;
+      try {
+        const items = await this.fetchLeaderboard(view);
+        if (isActive) {
+          callback(items, this.isOnline);
+        }
+      } catch {
+        if (isActive) {
+          const fallback = await dbManager.getLeaderboard(view as any);
+          callback(fallback, false);
+        }
+      }
+    };
+
+    // Immediate first pull
+    pullAndNotify();
+
+    const intervalTimer = setInterval(() => {
+      if (typeof document !== 'undefined' && document.hidden) return; // pause when tab in background
+      pullAndNotify();
+    }, intervalMs);
+
+    // Also listen to cross-tab updates
+    const unsub = this.subscribe(() => {
+      pullAndNotify();
+    });
+
+    return () => {
+      isActive = false;
+      clearInterval(intervalTimer);
+      unsub();
+    };
+  }
+
   // --- DELETE SINGLE SESSION ON LOCAL DB + SERVER + BROADCAST TO TABS ---
-  public async deleteSession(sessionId: string): Promise<boolean> {
+  public async deleteSession(sessionId: string, adminPin?: string): Promise<boolean> {
     await dbManager.deleteSession(sessionId);
 
     if (typeof window !== 'undefined') {
@@ -464,12 +597,17 @@ class SyncClient {
     }
 
     try {
+      const pin = adminPin || (await dbManager.getAdminPin()) || 'admin123';
       await fetch(`${this.syncUrl}/api/sessions`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'X-Admin-PIN': pin
+        },
         body: JSON.stringify({
           action: 'delete',
           sessionId,
+          adminPin: pin,
           deletedSessionIds: dbManager.getDeletedSessionIds()
         })
       });
@@ -482,7 +620,7 @@ class SyncClient {
   }
 
   // --- RESET ALL RECORDS ON LOCAL DB + SERVER + BROADCAST TO TABS ---
-  public async resetServerRecords(): Promise<boolean> {
+  public async resetServerRecords(adminPin?: string): Promise<boolean> {
     const timestamp = Date.now();
     await dbManager.clearAllSessions(timestamp);
 
@@ -497,17 +635,24 @@ class SyncClient {
     }
 
     try {
+      const pin = adminPin || (await dbManager.getAdminPin()) || 'admin123';
       const deletedSessionIds = dbManager.getDeletedSessionIds();
       await Promise.allSettled([
         fetch(`${this.syncUrl}/api/sessions`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ action: 'clear', timestamp, deletedSessionIds })
+          headers: { 
+            'Content-Type': 'application/json',
+            'X-Admin-PIN': pin
+          },
+          body: JSON.stringify({ action: 'clear', timestamp, deletedSessionIds, adminPin: pin })
         }),
         fetch(`${this.syncUrl}/api/reset-records`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ timestamp, deletedSessionIds })
+          headers: { 
+            'Content-Type': 'application/json',
+            'X-Admin-PIN': pin
+          },
+          body: JSON.stringify({ timestamp, deletedSessionIds, adminPin: pin })
         })
       ]);
       this.notify();

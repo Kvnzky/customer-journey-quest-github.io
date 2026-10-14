@@ -42,6 +42,7 @@ export type SessionEndReason = 'COMPLETED' | 'TIME_EXPIRED' | 'ABANDONED';
 export interface GameSession {
   id: string;
   deviceId: string;
+  playerId?: string;
   playerName: string;
   normalizedPlayerName: string;
   score: number;

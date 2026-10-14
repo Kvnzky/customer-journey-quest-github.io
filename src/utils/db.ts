@@ -27,6 +27,16 @@ class DatabaseManager {
     return id;
   }
 
+  public getPlayerId(playerName?: string): string {
+    const key = playerName ? `quest_player_id_${playerName.trim().toLowerCase()}` : 'quest_player_id';
+    let id = localStorage.getItem(key);
+    if (!id) {
+      id = `ply-${Date.now().toString(36)}-${Math.random().toString(36).substr(2, 6)}`;
+      localStorage.setItem(key, id);
+    }
+    return id;
+  }
+
   private getDB(): Promise<IDBDatabase> {
     if (this.dbPromise) return this.dbPromise;
 
@@ -738,6 +748,7 @@ class DatabaseManager {
     const session: GameSession = {
       id: `sess-${Date.now()}-${Math.random().toString(36).substr(2, 6)}`,
       deviceId: this.getDeviceId(),
+      playerId: this.getPlayerId(playerName),
       playerName,
       normalizedPlayerName: playerName.trim().toLowerCase(),
       score,
