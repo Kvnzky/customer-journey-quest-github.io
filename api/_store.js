@@ -2,20 +2,29 @@ import fs from 'fs';
 import os from 'os';
 import path from 'path';
 
-// Primary Central Redis Database configuration (supports Upstash / Vercel KV)
+// Primary Central Redis Database configuration (used if configured in environment variables)
 const REDIS_URL = (
   process.env.UPSTASH_REDIS_REST_URL ||
   process.env.KV_REST_API_URL ||
-  'https://magnetic-badger-234744.upstash.io'
+  ''
 ).replace(/\/+$/, '');
 
 const REDIS_TOKEN = (
   process.env.UPSTASH_REDIS_REST_TOKEN ||
   process.env.KV_REST_API_TOKEN ||
-  'gQAAAAAAA5T4AQIgcDEzOTAzN2I4ZDg0ZTM0MmQxYTNiZDhmMzM0MDFjZGQyZA'
+  ''
 );
 
+// Authoritative Persistent Central Cloud Store (shared across all Vercel serverless containers and devices)
+const CENTRAL_STORE_URL = (
+  process.env.CENTRAL_STORE_URL ||
+  'https://superjsonblob.com/api/jsonBlob/499c9701-e4a7-4b6c-8941-30281a016b6a'
+).trim();
+
 let inMemoryStore = null;
+let lastFetchTimestamp = 0;
+const CACHE_TTL_MS = 1200; // 1.2s fresh cache to protect against rapid redundant fetches while staying real-time
+
 const TMP_STORE_PATH = path.join(os.tmpdir(), 'quest-sync-data.json');
 
 const DEFAULT_STORE = {
@@ -39,62 +48,6 @@ const DEFAULT_STORE = {
   adminPin: 'admin123'
 };
 
-// Low-level atomic Redis command helper over HTTPS REST
-async function execRedis(cmd, ...args) {
-  if (!REDIS_URL || !REDIS_TOKEN) return null;
-  try {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 3500);
-
-    const res = await fetch(REDIS_URL, {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${REDIS_TOKEN}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify([cmd, ...args]),
-      signal: controller.signal
-    });
-    clearTimeout(timeoutId);
-
-    if (!res.ok) {
-      console.warn(`[CentralDB] Redis command ${cmd} failed with HTTP ${res.status}`);
-      return null;
-    }
-    const data = await res.json();
-    return data.result;
-  } catch (err) {
-    console.warn(`[CentralDB] Redis command ${cmd} error:`, err?.message || err);
-    return null;
-  }
-}
-
-// Low-level Redis Pipeline execution helper
-async function execRedisPipeline(commands) {
-  if (!REDIS_URL || !REDIS_TOKEN || !Array.isArray(commands) || commands.length === 0) return null;
-  try {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 4000);
-
-    const res = await fetch(`${REDIS_URL}/pipeline`, {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${REDIS_TOKEN}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(commands),
-      signal: controller.signal
-    });
-    clearTimeout(timeoutId);
-
-    if (!res.ok) return null;
-    return await res.json();
-  } catch (err) {
-    console.warn('[CentralDB] Redis pipeline error:', err?.message || err);
-    return null;
-  }
-}
-
 function normalizeStore(store) {
   if (!store || typeof store !== 'object') store = { ...DEFAULT_STORE };
   if (!Array.isArray(store.sessions)) store.sessions = [];
@@ -113,6 +66,57 @@ function normalizeStore(store) {
   });
 
   return store;
+}
+
+// Low-level atomic Redis command helper over HTTPS REST (only if REDIS_URL is provided)
+async function execRedis(cmd, ...args) {
+  if (!REDIS_URL || !REDIS_TOKEN) return null;
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 2000);
+
+    const res = await fetch(REDIS_URL, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${REDIS_TOKEN}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify([cmd, ...args]),
+      signal: controller.signal
+    });
+    clearTimeout(timeoutId);
+
+    if (!res.ok) return null;
+    const data = await res.json();
+    return data.result;
+  } catch (err) {
+    return null;
+  }
+}
+
+// Low-level Redis Pipeline execution helper
+async function execRedisPipeline(commands) {
+  if (!REDIS_URL || !REDIS_TOKEN || !Array.isArray(commands) || commands.length === 0) return null;
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 2500);
+
+    const res = await fetch(`${REDIS_URL}/pipeline`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${REDIS_TOKEN}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(commands),
+      signal: controller.signal
+    });
+    clearTimeout(timeoutId);
+
+    if (!res.ok) return null;
+    return await res.json();
+  } catch (err) {
+    return null;
+  }
 }
 
 // Read bundled fallback store from disk if needed
@@ -145,107 +149,171 @@ function saveLocalDiskStore(store) {
   } catch {}
 }
 
-/**
- * Retrieves the authoritative store from the central Redis database.
- * Falls back to local disk and memory if the database is temporarily unreachable.
- */
-export async function getStore() {
+// Fetch from the persistent central cloud store
+async function fetchCloudStore() {
+  if (!CENTRAL_STORE_URL) return null;
   try {
-    // 1. Fetch sessions from Redis Hash 'quest:sessions'
-    // 2. Fetch tombstones from Redis Set 'quest:tombstones'
-    // 3. Fetch meta from Redis Hash 'quest:meta'
-    const pipelineRes = await execRedisPipeline([
-      ['HVALS', 'quest:sessions'],
-      ['SMEMBERS', 'quest:tombstones'],
-      ['HGETALL', 'quest:meta']
-    ]);
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 3000);
 
-    if (pipelineRes && Array.isArray(pipelineRes) && pipelineRes[0]?.result !== undefined) {
-      const rawSessions = pipelineRes[0].result || [];
-      const rawTombstones = pipelineRes[1]?.result || [];
-      const rawMeta = pipelineRes[2]?.result || {};
+    const res = await fetch(CENTRAL_STORE_URL, {
+      headers: { Accept: 'application/json' },
+      signal: controller.signal
+    });
+    clearTimeout(timeoutId);
 
-      let parsedMeta = {};
-      if (Array.isArray(rawMeta)) {
-        for (let i = 0; i < rawMeta.length; i += 2) {
-          parsedMeta[rawMeta[i]] = rawMeta[i + 1];
-        }
-      } else if (typeof rawMeta === 'object' && rawMeta !== null) {
-        parsedMeta = rawMeta;
+    if (res.ok) {
+      const data = await res.json();
+      if (data && typeof data === 'object') {
+        return normalizeStore(data);
       }
-
-      const sessions = [];
-      for (const item of rawSessions) {
-        try {
-          const parsed = typeof item === 'string' ? JSON.parse(item) : item;
-          if (parsed && parsed.id) sessions.push(parsed);
-        } catch {}
-      }
-
-      let questions = [];
-      let settings = DEFAULT_STORE.settings;
-      let revision = DEFAULT_STORE.revision;
-      let lastPublished = DEFAULT_STORE.lastPublished;
-      let lastResetAt = Number(parsedMeta.lastResetAt) || 0;
-      let adminPin = parsedMeta.adminPin || DEFAULT_STORE.adminPin;
-
-      if (parsedMeta.settings) {
-        try { settings = JSON.parse(parsedMeta.settings); } catch {}
-      }
-      if (parsedMeta.questions) {
-        try { questions = JSON.parse(parsedMeta.questions); } catch {}
-      }
-      if (parsedMeta.revision) {
-        revision = Number(parsedMeta.revision) || revision;
-      }
-      if (parsedMeta.lastPublished) {
-        lastPublished = parsedMeta.lastPublished;
-      }
-
-      // If central database questions are empty, initialize from bundled defaults
-      if (questions.length === 0) {
-        const bundled = getBundledStore();
-        questions = bundled.questions || [];
-        if (bundled.settings) settings = bundled.settings;
-        if (bundled.revision) revision = bundled.revision;
-
-        // Populate Redis in background
-        execRedisPipeline([
-          ['HSET', 'quest:meta', 'questions', JSON.stringify(questions)],
-          ['HSET', 'quest:meta', 'settings', JSON.stringify(settings)],
-          ['HSET', 'quest:meta', 'revision', String(revision)]
-        ]).catch(() => {});
-      }
-
-      const centralStore = normalizeStore({
-        revision,
-        lastPublished,
-        questions,
-        settings,
-        sessions,
-        deletedSessionIds: rawTombstones,
-        lastResetAt,
-        adminPin
-      });
-
-      inMemoryStore = centralStore;
-      saveLocalDiskStore(centralStore);
-      return centralStore;
     }
   } catch (err) {
-    console.warn('[CentralDB] Error fetching store from Redis:', err);
+    console.warn('[CentralDB] Cloud store fetch warning:', err?.message || err);
+  }
+  return null;
+}
+
+// Persist whole store back to the persistent central cloud store
+async function persistCloudStore(store) {
+  if (!CENTRAL_STORE_URL) return false;
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 3500);
+
+    const res = await fetch(CENTRAL_STORE_URL, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(store),
+      signal: controller.signal
+    });
+    clearTimeout(timeoutId);
+
+    return res.ok;
+  } catch (err) {
+    console.warn('[CentralDB] Cloud store persist warning:', err?.message || err);
+    return false;
+  }
+}
+
+/**
+ * Retrieves the authoritative store from the central persistent database.
+ * Falls back to local disk and memory if the database is temporarily unreachable.
+ */
+export async function getStore(forceFresh = false) {
+  const now = Date.now();
+  if (!forceFresh && inMemoryStore && (now - lastFetchTimestamp < CACHE_TTL_MS)) {
+    return normalizeStore(inMemoryStore);
   }
 
-  // Fallback to in-memory or local disk
+  // 1. If Redis is explicitly configured, query Redis
+  if (REDIS_URL && REDIS_TOKEN) {
+    try {
+      const pipelineRes = await execRedisPipeline([
+        ['HVALS', 'quest:sessions'],
+        ['SMEMBERS', 'quest:tombstones'],
+        ['HGETALL', 'quest:meta']
+      ]);
+
+      if (pipelineRes && Array.isArray(pipelineRes) && pipelineRes[0]?.result !== undefined) {
+        const rawSessions = pipelineRes[0].result || [];
+        const rawTombstones = pipelineRes[1]?.result || [];
+        const rawMeta = pipelineRes[2]?.result || {};
+
+        let parsedMeta = {};
+        if (Array.isArray(rawMeta)) {
+          for (let i = 0; i < rawMeta.length; i += 2) {
+            parsedMeta[rawMeta[i]] = rawMeta[i + 1];
+          }
+        } else if (typeof rawMeta === 'object' && rawMeta !== null) {
+          parsedMeta = rawMeta;
+        }
+
+        const sessions = [];
+        for (const item of rawSessions) {
+          try {
+            const parsed = typeof item === 'string' ? JSON.parse(item) : item;
+            if (parsed && parsed.id) sessions.push(parsed);
+          } catch {}
+        }
+
+        let questions = [];
+        let settings = DEFAULT_STORE.settings;
+        let revision = DEFAULT_STORE.revision;
+        let lastPublished = DEFAULT_STORE.lastPublished;
+        let lastResetAt = Number(parsedMeta.lastResetAt) || 0;
+        let adminPin = parsedMeta.adminPin || DEFAULT_STORE.adminPin;
+
+        if (parsedMeta.settings) {
+          try { settings = JSON.parse(parsedMeta.settings); } catch {}
+        }
+        if (parsedMeta.questions) {
+          try { questions = JSON.parse(parsedMeta.questions); } catch {}
+        }
+        if (parsedMeta.revision) {
+          revision = Number(parsedMeta.revision) || revision;
+        }
+        if (parsedMeta.lastPublished) {
+          lastPublished = parsedMeta.lastPublished;
+        }
+
+        if (questions.length === 0) {
+          const bundled = getBundledStore();
+          questions = bundled.questions || [];
+          if (bundled.settings) settings = bundled.settings;
+          if (bundled.revision) revision = bundled.revision;
+        }
+
+        const centralStore = normalizeStore({
+          revision,
+          lastPublished,
+          questions,
+          settings,
+          sessions,
+          deletedSessionIds: rawTombstones,
+          lastResetAt,
+          adminPin
+        });
+
+        inMemoryStore = centralStore;
+        lastFetchTimestamp = now;
+        saveLocalDiskStore(centralStore);
+        return centralStore;
+      }
+    } catch (err) {
+      console.warn('[CentralDB] Redis query failed, using central cloud store:', err);
+    }
+  }
+
+  // 2. Query Central Cloud Store
+  const cloudStore = await fetchCloudStore();
+  if (cloudStore) {
+    if (!Array.isArray(cloudStore.questions) || cloudStore.questions.length === 0) {
+      const bundled = getBundledStore();
+      cloudStore.questions = bundled.questions || [];
+      cloudStore.settings = bundled.settings || cloudStore.settings;
+      cloudStore.revision = bundled.revision || cloudStore.revision;
+      persistCloudStore(cloudStore).catch(() => {});
+    }
+
+    inMemoryStore = cloudStore;
+    lastFetchTimestamp = now;
+    saveLocalDiskStore(cloudStore);
+    return cloudStore;
+  }
+
+  // 3. Fallback to in-memory, disk, or bundled defaults
   if (inMemoryStore) return normalizeStore(inMemoryStore);
   const disk = getLocalDiskStore();
   if (disk) {
     inMemoryStore = disk;
+    lastFetchTimestamp = now;
     return disk;
   }
 
   const bundled = getBundledStore();
   inMemoryStore = bundled;
+  lastFetchTimestamp = now;
   return bundled;
 }
 
@@ -255,95 +323,116 @@ export async function getStore() {
 export async function saveStore(store) {
   const normalized = normalizeStore(store);
   inMemoryStore = normalized;
+  lastFetchTimestamp = Date.now();
   saveLocalDiskStore(normalized);
 
-  try {
-    const pipelineCmds = [
-      ['HSET', 'quest:meta', 'revision', String(normalized.revision || 1)],
-      ['HSET', 'quest:meta', 'lastPublished', normalized.lastPublished || new Date().toISOString()],
-      ['HSET', 'quest:meta', 'lastResetAt', String(normalized.lastResetAt || 0)],
-      ['HSET', 'quest:meta', 'adminPin', normalized.adminPin || 'admin123'],
-      ['HSET', 'quest:meta', 'settings', JSON.stringify(normalized.settings || DEFAULT_STORE.settings)],
-      ['HSET', 'quest:meta', 'questions', JSON.stringify(normalized.questions || [])]
-    ];
+  if (REDIS_URL && REDIS_TOKEN) {
+    try {
+      const pipelineCmds = [
+        ['HSET', 'quest:meta', 'revision', String(normalized.revision || 1)],
+        ['HSET', 'quest:meta', 'lastPublished', normalized.lastPublished || new Date().toISOString()],
+        ['HSET', 'quest:meta', 'lastResetAt', String(normalized.lastResetAt || 0)],
+        ['HSET', 'quest:meta', 'adminPin', normalized.adminPin || 'admin123'],
+        ['HSET', 'quest:meta', 'settings', JSON.stringify(normalized.settings || DEFAULT_STORE.settings)],
+        ['HSET', 'quest:meta', 'questions', JSON.stringify(normalized.questions || [])]
+      ];
 
-    if (normalized.deletedSessionIds?.length > 0) {
-      pipelineCmds.push(['SADD', 'quest:tombstones', ...normalized.deletedSessionIds]);
+      if (normalized.deletedSessionIds?.length > 0) {
+        pipelineCmds.push(['SADD', 'quest:tombstones', ...normalized.deletedSessionIds]);
+      }
+
+      await execRedisPipeline(pipelineCmds);
+    } catch (err) {
+      console.warn('[CentralDB] Redis save error:', err);
     }
-
-    await execRedisPipeline(pipelineCmds);
-  } catch (err) {
-    console.warn('[CentralDB] Error saving store to Redis:', err);
   }
+
+  await persistCloudStore(normalized);
 }
 
 /**
- * Atomically saves a single completed game session to the central Redis database.
- * Uses Redis HSET for atomic, non-destructive write (zero race conditions).
+ * Atomically saves a single completed game session to the central persistent database.
  */
 export async function addSession(session) {
   if (!session || !session.id) return false;
 
-  // Check tombstone
-  const isTombstoned = await execRedis('SISMEMBER', 'quest:tombstones', session.id);
-  if (isTombstoned === 1) {
-    console.warn(`[CentralDB] Rejected resurrected session: ${session.id}`);
-    return false;
+  // 1. If Redis configured, write to Redis
+  if (REDIS_URL && REDIS_TOKEN) {
+    try {
+      const isTombstoned = await execRedis('SISMEMBER', 'quest:tombstones', session.id);
+      if (isTombstoned === 1) return false;
+      await execRedis('HSET', 'quest:sessions', session.id, JSON.stringify(session));
+    } catch (e) {}
   }
 
-  // Atomic HSET into Redis Hash
-  const jsonStr = JSON.stringify(session);
-  await execRedis('HSET', 'quest:sessions', session.id, jsonStr);
+  // 2. Save to Central Cloud Store
+  const currentStore = await getStore(true);
+  const deletedSet = new Set(currentStore.deletedSessionIds || []);
+  if (deletedSet.has(session.id)) return false;
 
-  // Update in-memory & local cache
-  if (!inMemoryStore) inMemoryStore = await getStore();
-  const exists = inMemoryStore.sessions.some(s => s.id === session.id);
-  if (!exists) {
-    inMemoryStore.sessions.push(session);
-    saveLocalDiskStore(inMemoryStore);
+  if (currentStore.lastResetAt > 0 && session.createdAt) {
+    const createdTs = new Date(session.createdAt).getTime();
+    if (!isNaN(createdTs) && createdTs < currentStore.lastResetAt) return false;
   }
 
+  if (!Array.isArray(currentStore.sessions)) currentStore.sessions = [];
+  const existingIdx = currentStore.sessions.findIndex(s => s.id === session.id);
+  if (existingIdx >= 0) {
+    currentStore.sessions[existingIdx] = session;
+  } else {
+    currentStore.sessions.push(session);
+  }
+
+  inMemoryStore = currentStore;
+  lastFetchTimestamp = Date.now();
+  saveLocalDiskStore(currentStore);
+
+  await persistCloudStore(currentStore);
   return true;
 }
 
 /**
- * Atomically saves multiple sessions to the central database via Redis pipeline.
+ * Atomically saves multiple sessions to the central database.
  */
 export async function addSessions(sessions) {
   if (!Array.isArray(sessions) || sessions.length === 0) return 0;
+  const valid = sessions.filter(s => s && s.id);
+  if (valid.length === 0) return 0;
 
-  const validSessions = sessions.filter(s => s && s.id);
-  if (validSessions.length === 0) return 0;
+  if (REDIS_URL && REDIS_TOKEN) {
+    try {
+      const tombstones = (await execRedis('SMEMBERS', 'quest:tombstones')) || [];
+      const tSet = new Set(tombstones);
+      const cmds = valid.filter(s => !tSet.has(s.id)).map(s => ['HSET', 'quest:sessions', s.id, JSON.stringify(s)]);
+      if (cmds.length > 0) await execRedisPipeline(cmds);
+    } catch (e) {}
+  }
 
-  // Fetch tombstones to filter
-  const tombstones = (await execRedis('SMEMBERS', 'quest:tombstones')) || [];
-  const tombstoneSet = new Set(tombstones);
+  const currentStore = await getStore(true);
+  const deletedSet = new Set(currentStore.deletedSessionIds || []);
+  const lastResetAt = currentStore.lastResetAt || 0;
 
-  const pipeline = [];
-  const added = [];
+  if (!Array.isArray(currentStore.sessions)) currentStore.sessions = [];
+  const existingMap = new Map(currentStore.sessions.map(s => [s.id, s]));
+  let addedCount = 0;
 
-  for (const s of validSessions) {
-    if (!tombstoneSet.has(s.id)) {
-      pipeline.push(['HSET', 'quest:sessions', s.id, JSON.stringify(s)]);
-      added.push(s);
+  for (const s of valid) {
+    if (deletedSet.has(s.id)) continue;
+    if (lastResetAt > 0 && s.createdAt) {
+      const ts = new Date(s.createdAt).getTime();
+      if (!isNaN(ts) && ts < lastResetAt) continue;
     }
+    if (!existingMap.has(s.id)) addedCount++;
+    existingMap.set(s.id, s);
   }
 
-  if (pipeline.length > 0) {
-    await execRedisPipeline(pipeline);
-  }
+  currentStore.sessions = Array.from(existingMap.values());
+  inMemoryStore = currentStore;
+  lastFetchTimestamp = Date.now();
+  saveLocalDiskStore(currentStore);
 
-  if (!inMemoryStore) inMemoryStore = await getStore();
-  const existingIds = new Set(inMemoryStore.sessions.map(s => s.id));
-  for (const s of added) {
-    if (!existingIds.has(s.id)) {
-      inMemoryStore.sessions.push(s);
-      existingIds.add(s.id);
-    }
-  }
-  saveLocalDiskStore(inMemoryStore);
-
-  return added.length;
+  await persistCloudStore(currentStore);
+  return addedCount;
 }
 
 /**
@@ -352,19 +441,27 @@ export async function addSessions(sessions) {
 export async function deleteSession(sessionId) {
   if (!sessionId) return false;
 
-  await execRedisPipeline([
-    ['HDEL', 'quest:sessions', sessionId],
-    ['SADD', 'quest:tombstones', sessionId]
-  ]);
-
-  if (inMemoryStore) {
-    inMemoryStore.sessions = inMemoryStore.sessions.filter(s => s.id !== sessionId);
-    if (!inMemoryStore.deletedSessionIds.includes(sessionId)) {
-      inMemoryStore.deletedSessionIds.push(sessionId);
-    }
-    saveLocalDiskStore(inMemoryStore);
+  if (REDIS_URL && REDIS_TOKEN) {
+    try {
+      await execRedisPipeline([
+        ['HDEL', 'quest:sessions', sessionId],
+        ['SADD', 'quest:tombstones', sessionId]
+      ]);
+    } catch (e) {}
   }
 
+  const store = await getStore(true);
+  store.sessions = (store.sessions || []).filter(s => s.id !== sessionId);
+  if (!Array.isArray(store.deletedSessionIds)) store.deletedSessionIds = [];
+  if (!store.deletedSessionIds.includes(sessionId)) {
+    store.deletedSessionIds.push(sessionId);
+  }
+
+  inMemoryStore = store;
+  lastFetchTimestamp = Date.now();
+  saveLocalDiskStore(store);
+
+  await persistCloudStore(store);
   return true;
 }
 
@@ -374,23 +471,30 @@ export async function deleteSession(sessionId) {
 export async function deleteSessions(sessionIds) {
   if (!Array.isArray(sessionIds) || sessionIds.length === 0) return false;
 
-  const pipeline = [
-    ['HDEL', 'quest:sessions', ...sessionIds],
-    ['SADD', 'quest:tombstones', ...sessionIds]
-  ];
-  await execRedisPipeline(pipeline);
-
-  if (inMemoryStore) {
-    const idSet = new Set(sessionIds);
-    inMemoryStore.sessions = inMemoryStore.sessions.filter(s => !idSet.has(s.id));
-    for (const id of sessionIds) {
-      if (!inMemoryStore.deletedSessionIds.includes(id)) {
-        inMemoryStore.deletedSessionIds.push(id);
-      }
-    }
-    saveLocalDiskStore(inMemoryStore);
+  if (REDIS_URL && REDIS_TOKEN) {
+    try {
+      await execRedisPipeline([
+        ['HDEL', 'quest:sessions', ...sessionIds],
+        ['SADD', 'quest:tombstones', ...sessionIds]
+      ]);
+    } catch (e) {}
   }
 
+  const store = await getStore(true);
+  const idSet = new Set(sessionIds);
+  store.sessions = (store.sessions || []).filter(s => !idSet.has(s.id));
+  if (!Array.isArray(store.deletedSessionIds)) store.deletedSessionIds = [];
+  for (const id of sessionIds) {
+    if (!store.deletedSessionIds.includes(id)) {
+      store.deletedSessionIds.push(id);
+    }
+  }
+
+  inMemoryStore = store;
+  lastFetchTimestamp = Date.now();
+  saveLocalDiskStore(store);
+
+  await persistCloudStore(store);
   return true;
 }
 
@@ -398,27 +502,35 @@ export async function deleteSessions(sessionIds) {
  * Atomically resets all sessions and records the reset timestamp.
  */
 export async function clearAllSessions(timestamp = Date.now()) {
-  const store = await getStore();
-  const currentIds = store.sessions.map(s => s.id);
-
-  const pipeline = [
-    ['DEL', 'quest:sessions'],
-    ['HSET', 'quest:meta', 'lastResetAt', String(timestamp)]
-  ];
-  if (currentIds.length > 0) {
-    pipeline.push(['SADD', 'quest:tombstones', ...currentIds]);
+  if (REDIS_URL && REDIS_TOKEN) {
+    try {
+      const store = await getStore();
+      const currentIds = (store.sessions || []).map(s => s.id);
+      const pipeline = [
+        ['DEL', 'quest:sessions'],
+        ['HSET', 'quest:meta', 'lastResetAt', String(timestamp)]
+      ];
+      if (currentIds.length > 0) {
+        pipeline.push(['SADD', 'quest:tombstones', ...currentIds]);
+      }
+      await execRedisPipeline(pipeline);
+    } catch (e) {}
   }
 
-  await execRedisPipeline(pipeline);
-
+  const store = await getStore(true);
+  const currentIds = (store.sessions || []).map(s => s.id);
   store.sessions = [];
   store.lastResetAt = timestamp;
+  if (!Array.isArray(store.deletedSessionIds)) store.deletedSessionIds = [];
   if (currentIds.length > 0) {
-    store.deletedSessionIds = Array.from(new Set([...(store.deletedSessionIds || []), ...currentIds]));
+    store.deletedSessionIds = Array.from(new Set([...store.deletedSessionIds, ...currentIds]));
   }
+
   inMemoryStore = store;
+  lastFetchTimestamp = Date.now();
   saveLocalDiskStore(store);
 
+  await persistCloudStore(store);
   return true;
 }
 
@@ -480,7 +592,6 @@ export async function getAuthoritativeLeaderboard(view = 'overall', targetPlayer
   if (view === 'personal_bests') {
     const bestMap = new Map();
     ranked.forEach(s => {
-      // Group by playerId if present, otherwise by normalized player name
       const key = s.playerId || s.normalizedPlayerName || (s.playerName || '').trim().toLowerCase();
       if (!bestMap.has(key)) {
         bestMap.set(key, s);

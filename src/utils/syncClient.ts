@@ -449,6 +449,46 @@ class SyncClient {
     return newRevision;
   }
 
+  // --- PUSH QUEUED SESSIONS IN BACKGROUND ---
+  public async pushQueuedSessions(sessionsToPush?: any[]): Promise<void> {
+    try {
+      const queued = sessionsToPush || (await dbManager.getQueuedSessions());
+      if (!Array.isArray(queued) || queued.length === 0) return;
+
+      const deletedSessionIds = dbManager.getDeletedSessionIds();
+      const lastResetAt = dbManager.getLastResetTimestamp();
+
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 5000);
+
+      const res = await fetch(`${this.syncUrl}/api/sessions`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          sessions: queued,
+          deletedSessionIds,
+          lastResetAt
+        }),
+        signal: controller.signal
+      });
+      clearTimeout(timeoutId);
+
+      if (res.ok) {
+        const data = await res.json();
+        if (data.ok) {
+          await dbManager.markSessionsSynced(queued.map(s => s.id));
+          this.pendingCount = 0;
+          if (Array.isArray(data.sessions)) {
+            await dbManager.mergeIncomingSessions(data.sessions, data.deletedSessionIds, data.lastResetAt);
+          }
+          this.notify();
+        }
+      }
+    } catch (err) {
+      console.warn('[SyncClient] Push queued sessions background retry:', err);
+    }
+  }
+
   // --- IMMEDIATE SCORE SUBMISSION TO CENTRAL DATABASE ---
   public async submitSession(session: any): Promise<{ ok: boolean; session?: any; rank?: number; isSharedRank?: boolean; error?: string }> {
     try {
@@ -494,7 +534,6 @@ class SyncClient {
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Submission failed';
       this.syncError = msg;
-      this.isOnline = false;
       this.notify();
       return { ok: false, error: msg };
     }
@@ -504,7 +543,7 @@ class SyncClient {
   public async fetchLeaderboard(view: string = 'overall', search: string = ''): Promise<any[]> {
     try {
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 3500);
+      const timeoutId = setTimeout(() => controller.abort(), 4000);
 
       const queryParams = new URLSearchParams();
       queryParams.set('view', view);
@@ -523,11 +562,19 @@ class SyncClient {
         if (data.ok && Array.isArray(data.leaderboard)) {
           this.isOnline = true;
           this.syncError = null;
-          // Asynchronously update local IndexedDB cache with latest server records
+          // 1. Merge server records into local IndexedDB
           if (data.leaderboard.length > 0) {
-            dbManager.mergeIncomingSessions(data.leaderboard).catch(() => {});
+            await dbManager.mergeIncomingSessions(data.leaderboard);
           }
-          return data.leaderboard;
+
+          // 2. Check for any pending local sessions not yet uploaded to server
+          const queued = await dbManager.getQueuedSessions();
+          if (queued.length > 0) {
+            this.pushQueuedSessions(queued).catch(() => {});
+          }
+
+          // 3. Return comprehensive ranked leaderboard from IndexedDB (contains server + local sessions)
+          return await dbManager.getLeaderboard(view as any, search);
         }
       }
     } catch (err) {
@@ -536,7 +583,7 @@ class SyncClient {
     }
 
     // Fallback to local IndexedDB if offline or API unreachable
-    return dbManager.getLeaderboard(view as any, search);
+    return await dbManager.getLeaderboard(view as any, search);
   }
 
   // --- AUTOMATIC REAL-TIME LEADERBOARD STREAM (1-2s LATENCY) ---

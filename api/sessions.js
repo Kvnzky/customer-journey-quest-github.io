@@ -158,6 +158,13 @@ export default async function handler(req, res) {
     }
 
     // Batch Session Submission / Queue Flush
+    if (Array.isArray(body.deletedSessionIds) && body.deletedSessionIds.length > 0) {
+      await deleteSessions(body.deletedSessionIds);
+    }
+    if (typeof body.lastResetAt === 'number' && body.lastResetAt > (store.lastResetAt || 0)) {
+      await clearAllSessions(body.lastResetAt);
+    }
+
     const incomingList = Array.isArray(body.sessions) ? body.sessions : [];
     const sanitizedList = incomingList.map(sanitizeSession).filter(Boolean);
 
